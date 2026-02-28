@@ -1,0 +1,10 @@
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">zgrey</a>
+    <ul class="nav-links">
+      <li><a href="/research/"{% if page.url == "/research/" %} class="active" aria-current="page"{% endif %}>research</a></li>
+      <li><a href="/code/"{% if page.url == "/code/" %} class="active" aria-current="page"{% endif %}>code</a></li>
+      <li><a href="/blog/"{% if "/blog/" in page.url %} class="active" aria-current="page"{% endif %}>blog</a></li>
+    </ul>
+  </div>
+</nav>
