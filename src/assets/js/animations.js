@@ -1,4 +1,12 @@
 // ===== ASCII Animation Engine =====
+// ===== Animation Configuration Flags =====
+// Set these booleans to enable/disable individual background animations.
+// true  → animation runs
+// false → animation is omitted from the cycle.
+const ENABLE_VORONOI   = true;   // Grain‑morphology (Voronoi) animation
+const ENABLE_SIMPLICIAL = false; // Random‑graph (simplicial) animation
+const ENABLE_AIRFOIL   = false; // Airfoil flow animation
+// =========================================
 
 const COLOR_GOLD = '#A69C7D';
 const COLOR_DIM_GREEN = '#2d3d28';
@@ -351,7 +359,12 @@ class AirfoilScene {
 class AnimationController {
   constructor(canvas) {
     this.renderer = new ASCIIRenderer(canvas);
-    this.scenes = [new VoronoiScene(), new SimplicialScene(), new AirfoilScene()];
+    // Build the scenes array based on the configuration flags above.
+    this.scenes = [];
+    if (ENABLE_VORONOI)   this.scenes.push(new VoronoiScene());
+    if (ENABLE_SIMPLICIAL) this.scenes.push(new SimplicialScene());
+    if (ENABLE_AIRFOIL)   this.scenes.push(new AirfoilScene());
+    
     this.currentScene = 0;
     this.sceneStartTime = 0;
     this.lastSimTime = 0;
