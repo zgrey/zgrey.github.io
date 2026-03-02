@@ -126,7 +126,7 @@ class VoronoiScene {
         const ratio = minD / (secondD + 0.001);
         if (ratio > 0.75) {
           const ch = boundaryChars[minI % boundaryChars.length];
-          renderer.setChar(r, c, ch, COLOR_GOLD);
+          renderer.setChar(r, c, ch, COLOR_GREEN);
         } else if (ratio > 0.5) {
           renderer.setChar(r, c, '.', COLOR_DIM_GREEN);
         }
