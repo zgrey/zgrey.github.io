@@ -14,7 +14,7 @@ const COLOR_GREEN = '#4a6741';
 const CHAR_W = 10;
 const CHAR_H = 18;
 const SIM_INTERVAL = 1000 / 18; // ~18fps simulation
-const SCENE_DURATION = 10000;   // 10s per scene
+const SCENE_DURATION = 60000;   // 10s per scene
 const FADE_DURATION = 1500;     // 1.5s cross-fade
 
 // ===== ASCIIRenderer =====
