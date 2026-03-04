@@ -46,6 +46,16 @@
 
         // Scroll to top
         window.scrollTo(0, 0);
+
+        // Re-render KaTeX math in swapped content
+        if (typeof renderMathInElement === 'function') {
+          renderMathInElement(document.body, {
+            delimiters: [
+              {left: "\\(", right: "\\)", display: false},
+              {left: "\\[", right: "\\]", display: true}
+            ]
+          });
+        }
       })
       .catch(() => {
         // Fallback to normal navigation on error

@@ -1,6 +1,7 @@
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy("src/assets");
   eleventyConfig.addPassthroughCopy("src/.nojekyll");
+  eleventyConfig.addPassthroughCopy("src/CNAME");
 
   eleventyConfig.addFilter("readableDate", (dateObj) => {
     const d = new Date(dateObj);
