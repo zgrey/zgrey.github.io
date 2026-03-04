@@ -7,7 +7,7 @@
   --color-text-secondary: #a9a076;
   --color-text-heading: #d0c2a5;
   --color-accent-primary: #537949;
-  --color-accent-hover: #5c8a50;
+  --color-accent-hover: #6ea262;
   --color-accent-dim: #2d3d28;
   --color-border: #333333;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -352,7 +352,7 @@ a:hover, a:focus {
 }
 
 .research-section p.landing-footnote {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: var(--color-text-secondary);
   margin-top: 1rem;
   text-align: left;
@@ -419,6 +419,10 @@ a:hover, a:focus {
 .evie-header-dog .dog-img {
   width: 7rem;
 }
+
+.evie-header-dog:hover .dog-img { opacity: 1; filter: brightness(1.4); }
+
+.ev... (placeholder)
 
 .evie-header h2 {
   margin: 0;
