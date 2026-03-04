@@ -3,11 +3,45 @@ layout: layouts/base.njk
 bodyClass: landing
 ---
 <div class="landing-container">
-  <canvas id="ascii-canvas" aria-hidden="true"></canvas>
   <div class="landing-overlay">
     <h1 class="landing-name">Zach Grey</h1>
     <p class="landing-tagline">Dimension Reduction · Separable Shape Tensors</p>
     <p class="landing-affiliation">---- Research Mathematician ----</p>
   </div>
 </div>
-<script src="/assets/js/animations.js" type="module"></script>
+<section class="landing-about-section">
+  <div class="landing-about-inner">
+    <section class="research-section">
+      <h2>About</h2>
+      <p>Staff mathematician in the Applied &amp; Computational Mathematics Division at <a href="https://www.nist.gov/people/zachary-grey">NIST</a>. My research focuses on model-based dimension reduction and manifold learning for explanations and interpretations related to AI/ML, with applications in imaging, signal processing, geometry, and optimization.</p>
+      <div class="landing-details">
+        <div class="landing-detail-col">
+          <h3>Education</h3>
+          <ul>
+            <li>Ph.D. Aerospace Engineering*, CU Boulder</li>
+            <li>M.S. Aero./Astro. Engineering, Purdue</li>
+            <li>B.S. Aerospace Engineering, Embry-Riddle</li>
+          </ul>
+          <p class="landing-footnote">*Coursework and qualifying exams in Computational &amp; Applied Mathematics, Colorado School of Mines</p>
+        </div>
+        <div class="landing-detail-col">
+          <h3>Previously</h3>
+          <ul>
+            <li>Fryrear Fellow, Colorado School of Mines</li>
+            <li>Robust Design Technical Lead, Rolls-Royce</li>
+            <li>NASA Space Grant Research Assistant</li>
+          </ul>
+        </div>
+      </div>
+      <div class="sleeping-dog" aria-hidden="true">
+        <img class="dog-img" src="/assets/img/evie.png" alt="">
+        <span class="evie-float">
+          <span class="evie-letter" style="animation-delay:0s">e</span>
+          <span class="evie-letter" style="animation-delay:0.6s">v</span>
+          <span class="evie-letter" style="animation-delay:1.2s">i</span>
+          <span class="evie-letter" style="animation-delay:1.8s">e</span>
+        </span>
+      </div>
+    </section>
+  </div>
+</section>

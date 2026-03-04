@@ -13,5 +13,5 @@ Eleventy 3.x static site for zgrey.github.io. Source lives in `src/`, builds to 
 
 - [ ] Research page (`src/research/index.njk`) -- fill in placeholder content with actual research descriptions, publications, and paper links
 - [ ] Code page (`src/code/index.njk`) -- add real project links and descriptions (GitHub repos, documentation)
-- [ ] Blog -- add more posts to `src/blog/` (Markdown files with `title` and `date` in front matter)
+- [ ] EVIE (`src/evie/index.njk`) -- wire up agent backend when ready
 - [ ] Run `npm run dev` to preview changes locally before pushing
