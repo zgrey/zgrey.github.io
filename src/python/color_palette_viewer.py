@@ -16,6 +16,7 @@ the terminal; otherwise a plain‑text fallback is used.
 import pathlib
 import re
 import sys
+import argparse
 
 # ----------------------------------------------------------------------
 # Helper: optional pretty printing with the `rich` library
@@ -114,7 +115,11 @@ def _render_plain(entries):
 def main():
     # Repository root is two levels up from this file (src/python/)
     repo_root = pathlib.Path(__file__).resolve().parents[2]
-    palette_path = repo_root / "color-palette.md"
+    parser = argparse.ArgumentParser(description="Display color palette entries")
+    parser.add_argument("--original", action="store_true", help="Load original color palette (color-palette-original.md)")
+    args = parser.parse_args()
+    palette_file = "color-palette-original.md" if args.original else "color-palette.md"
+    palette_path = repo_root / palette_file
 
     try:
         entries = parse_palette_markdown(palette_path)
