@@ -56,6 +56,11 @@
             ]
           });
         }
+
+        // Re-initialize airfoil animation if present in new content
+        if (typeof window.initAirfoilAnim === 'function') {
+          window.initAirfoilAnim();
+        }
       })
       .catch(() => {
         // Fallback to normal navigation on error

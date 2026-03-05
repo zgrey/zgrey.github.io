@@ -384,6 +384,18 @@ a:hover, a:focus {
   border: 1px solid var(--color-border);
 }
 
+.code-project .frame-anim {
+  display: block;
+  max-width: 75%;
+  margin: 1rem auto;
+}
+
+.code-project .frame-anim img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .code-project .project-links {
   margin-top: 1rem;
 }
