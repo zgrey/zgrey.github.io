@@ -9,12 +9,12 @@ title: Research
   <p>\[ X = \tilde{X} P, \quad \tilde{X} := VU^\top, \quad P := U\Sigma U^\top \in \mathcal{S}^d_{++}, \]</p>
   <p>where \([\tilde{X}] \in \mathrm{Gr}(d,n)\) encodes nonlinear undulation over the Grassmannian and \(P\) encodes generalized anisotropic scale over \(\mathrm{GL}^+(d,\mathbb{R})/\mathrm{SO}(d)\), independent of rotations and reflections.</p>
   <p>The formalism is grounded in a composite linear operator (CLO),</p>
-  <p>\[T[c](s) = c(s) - \int c(u)d\mu(u) \]</p>
+  <p>\[ T[c](s) = c(s) - \int c(u)d\mu(u)\] </p>
   and
-  <p>\[k_{T[c]}(s,u) = \left( T[c](s) \right) \cdot \left( T[c](u)\right), \] </p>
+  <p> \[k_{T}[c](s,u) = T[c](s) \cdot T[c](u),\] </p>
   <p>which is invariant to permutations, rotations, reflections, and translations (PRRTI). Eigensolutions satisfy the Fredholm integral equation,</p>
-  <p>\[ \int k_{T[c]}(s,u)\, v_j(u)\, d\mu(u) = \sigma_j^2\, v_j(s), \quad j=1,\dots,d. \]</p>
-  <p>A central result (Thm. 1) of this simple curve-PCA establishes that the eigenfunctions are orthonormal dual evaluation functionals of a curve in the intersection \(\mathcal{C}_d \cap \mathcal{H}_d\), where \(\mathcal{H}_d\) is a vector-valued RKHS with flexible kernel-controlled regularity. Explainable binary classification (EBC) is performed via a product maximum mean discrepancy (MMD) over the separable parameter distributions, yielding provably logical statistical decisions in seconds--even with ensembles containing thousands of curves.</p>
+  <p>\[ \int k_{T}[c](s,u)\, v_j(u)\, d\mu(u) = \sigma_j^2\, v_j(s), \]</p>
+  <p> \(j=1,\dots,d\). A central result (Thm. 1) of this simple curve-PCA establishes that the eigenfunctions are orthonormal dual evaluation functionals of a curve in the intersection \(\mathcal{C}_d \cap \mathcal{H}_d\), where \(\mathcal{H}_d\) is a vector-valued RKHS with flexible kernel-controlled regularity. Explainable binary classification (EBC) is performed via a product maximum mean discrepancy (MMD) over the separable parameter distributions, yielding provably logical statistical decisions in seconds--even with ensembles containing thousands of curves.</p>
   <p><a href="https://arxiv.org/abs/2410.12994">Grey, Fisher, &amp; Glaws (2026) &mdash; arXiv:2410.12994</a></p>
 </section>
 
@@ -27,7 +27,7 @@ title: Research
   <p>The dominant eigenvectors span an <em>active subspace</em>: a reduced-dimensional subspace along which \(f\) changes the most, on average. Orthogonal directions constitute an inactive subspace where the function is nearly constant. This framework was succesfully applied to the calibration of aero-engine thermal models and to shape sensitivity of transonic airfoils parameterized by PARSEC and class-shape transformations. However, in the latter, the resulting active subspace depends on the chosen shape parameterization which raises a natural question: can we define a dimension reduction that is intrinsic to the shapes themselves?</p>
 
   <h3>A space of shapes</h3>
-  <p>Rather than fixing a parameterization, we represent shapes directly as <em>centered</em> landmark matrices \(X_n \in \mathbb{R}^{n \times d}_*\). An affine standardization via the thin SVD maps each translated shape to a representative element of the Stiefel manifold \(\mathrm{St}(d,n)\), modding scale variations as invertible linear deformations. The equivalence classes live on the Grassmannian \(\mathrm{Gr}(d,n)\), and a local section of the principal \(\mathrm{GL}_d\) fiber bundle recovers physical scales. For airfoils (\(d=2\)), a database of ~1500 shapes was standardized with \(n=1000\) landmarks each, and tangent Principal Components Analysis (PCA) at an approximated Karcher mean provided a data-driven basis for the tangent space of this learned manifold.</p>
+  <p>Rather than selecting an engineering parameterization, we represent shapes directly as <em>centered</em> landmark matrices \(X_n \in \mathbb{R}^{n \times d}_*\) (full rank, not lines or points). An affine standardization via the thin SVD maps each translated shape to a representative element of the Stiefel manifold \(\mathrm{St}(d,n)\), modding scale variations as invertible linear deformations. The equivalence classes live on the Grassmannian \(\mathrm{Gr}(d,n)\), and a local section of the principal \(\mathrm{GL}_d\) fiber bundle recovers physical scales. For airfoils (\(d=2\)), a database of ~1500 shapes was standardized with \(n=1000\) landmarks each, and tangent Principal Components Analysis (PCA) at an approximated Karcher mean provided a data-driven basis for the tangent space of this learned manifold.</p>
 
   <h3>Active manifold-geodesics</h3>
   <p>Extending the active subspace to a Riemannian manifold \((M,g)\) requires replacing the component-wise Euclidean integral with one that respects the geometry. The key insight is that the Euclidean gradient outer product implicitly uses the identity as parallel transport. On a general manifold, we must explicitly transport gradients back to a central tangent space \(T_{p_0}M\) along unique geodesics using the Levi-Civita connection. This yields the Riemannian average outer product of the gradient,</p>
