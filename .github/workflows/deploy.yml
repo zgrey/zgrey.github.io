@@ -34,8 +34,6 @@ jobs:
           curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_x64.tar.gz -o gitleaks.tar.gz
           tar -xzf gitleaks.tar.gz
           chmod +x gitleaks
-          # move binary to project root for later step
-          mv gitleaks ./gitleaks
       - name: Dependency audit (high severity)
         run: npm run audit
       - name: ESLint linting
