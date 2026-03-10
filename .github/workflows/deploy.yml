@@ -29,12 +29,16 @@ jobs:
 
       - run: npm install
       # --- Security checks ---
+      - name: Install Gitleaks binary
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.2/gitleaks-linux-amd64 -o gitleaks
+          chmod +x gitleaks
       - name: Dependency audit (high severity)
         run: npm run audit
       - name: ESLint linting
         run: npm run lint
       - name: Secret scanning (Gitleaks)
-        run: npm run gitleaks
+        run: ./gitleaks detect --source . --redact --report-path=gitleaks-report.json
       - name: Build Eleventy site
         run: npm run build
       # --- HTML validation ---
