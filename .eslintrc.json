@@ -1,4 +1,17 @@
 {
   "extends": ["standard"],
-  "env": { "node": true, "es2021": true }
+  "env": { "node": true, "es2021": true },
+  "rules": {
+    "semi": "off",
+    "quotes": "off",
+    "space-before-function-paren": "off",
+    "comma-dangle": "off",
+    "no-multiple-empty-lines": "off",
+    "no-undef": "off",
+    "no-unused-vars": "off",
+    "object-curly-spacing": "off",
+    "no-trailing-spaces": "off",
+    "no-multi-spaces": "off",
+    "one-var": "off"
+  }
 }
