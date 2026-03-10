@@ -11,6 +11,10 @@
     "gitleaks": "gitleaks detect --source . --redact --report-path=gitleaks-report.json"
   },
   "devDependencies": {
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
     "@11ty/eleventy": "^3.0.0",
     "eslint": "^8.57.0",
     "html-validate": "^8.0.0",
