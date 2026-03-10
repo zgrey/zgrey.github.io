@@ -21,37 +21,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - run: npm install
+      - run: npm ci
+
       # --- Security checks ---
-      - name: Install Gitleaks binary
-        run: |
-          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.0/gitleaks_8.30.0_linux_x64.tar.gz -o gitleaks.tar.gz
-          tar -xzf gitleaks.tar.gz
-          chmod +x gitleaks
       - name: Dependency audit (high severity)
         run: npm run audit
+
       - name: ESLint linting
         run: npm run lint
+
       - name: Secret scanning (Gitleaks)
-        run: ./gitleaks detect --source . --redact --report-path=gitleaks-report.json
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build Eleventy site
         run: npm run build
-      # --- HTML validation ---
+
       - name: Validate generated HTML
         run: npm run html-validate
 
       - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
           path: _site
 
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
