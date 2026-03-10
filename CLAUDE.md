@@ -8,6 +8,10 @@ Eleventy 3.x static site for zgrey.github.io. Source lives in `src/`, builds to 
 
 - `npm run dev` -- local dev server at localhost:8080
 - `npm run build` -- production build to `_site/`
+- `npm run audit` -- run npm audit (high severity)
+- `npm run lint` -- lint code with ESLint
+- `npm run html-validate` -- validate generated HTML
+- `npm run gitleaks` -- scan repository for secrets
 
 ## Content TODO
 

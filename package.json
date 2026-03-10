@@ -4,9 +4,16 @@
   "type": "module",
   "scripts": {
     "dev": "npx @11ty/eleventy --serve",
-    "build": "npx @11ty/eleventy"
+    "build": "npx @11ty/eleventy",
+    "audit": "npm audit --audit-level=high",
+    "lint": "eslint .",
+    "html-validate": "html-validate \"_site/**/*.html\"",
+    "gitleaks": "gitleaks detect --source . --redact --report-path=gitleaks-report.json"
   },
   "devDependencies": {
-    "@11ty/eleventy": "^3.0.0"
+    "@11ty/eleventy": "^3.0.0",
+    "eslint": "^8.57.0",
+    "html-validate": "^8.0.0",
+    "gitleaks": "^8.18.2"
   }
 }
