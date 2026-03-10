@@ -27,7 +27,7 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
+      - run: npm install
       # --- Security checks ---
       - name: Dependency audit (high severity)
         run: npm run audit
