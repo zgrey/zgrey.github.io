@@ -396,6 +396,10 @@ a:hover, a:focus {
   height: auto;
 }
 
+.code-project .frame-anim.blade-anim {
+  max-width: 95%;
+}
+
 .code-project .project-links {
   margin-top: 1rem;
 }
