@@ -14,6 +14,20 @@
   --max-width: 48rem;
 }
 
+/* ===== Light Theme (NIST-inspired) ===== */
+[data-theme="light"] {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f1f1f1;
+  --color-bg-elevated: #e8e8e8;
+  --color-text-primary: #1b1b1b;
+  --color-text-secondary: #454545;
+  --color-text-heading: #0b2d71;
+  --color-accent-primary: #005ea2;
+  --color-accent-hover: #0076d6;
+  --color-accent-dim: #dbeefa;
+  --color-border: #c9c9c9;
+}
+
 /* ===== Reset ===== */
 *, *::before, *::after {
   margin: 0;
@@ -74,6 +88,42 @@ a:hover, a:focus {
   background-color: rgba(42, 42, 42, 0.85);
   border-bottom: 1px solid var(--color-border);
   backdrop-filter: blur(4px);
+}
+
+[data-theme="light"] .site-nav {
+  background-color: rgba(241, 241, 241, 0.9);
+}
+
+[data-theme="light"] .site-footer {
+  background-color: rgba(42, 42, 42, 0.95);
+}
+
+[data-theme="light"] .landing .site-nav {
+  background-color: transparent;
+}
+
+.nav-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ===== Theme Toggle ===== */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  transition: color 0.2s, border-color 0.2s;
+  line-height: 1;
+}
+
+.theme-toggle:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-secondary);
 }
 
 .nav-inner {
@@ -165,12 +215,22 @@ a:hover, a:focus {
 .footer-nist-links a {
   color: var(--color-text-secondary);
   opacity: 0.5;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, color 0.2s;
 }
 
 .footer-nist-links a:hover {
   opacity: 1;
   color: var(--color-text-primary);
+}
+
+[data-theme="light"] .footer-nist-links a {
+  color: #e0e0e0;
+  opacity: 0.8;
+}
+
+[data-theme="light"] .footer-nist-links a:hover {
+  opacity: 1;
+  color: #ffffff;
 }
 
 .footer-nist-links a:not(:last-child)::after {
@@ -187,6 +247,10 @@ a:hover, a:focus {
   background-color: rgba(26, 26, 26, 0.75);
   backdrop-filter: blur(2px);
   min-height: calc(100vh - 6rem);
+}
+
+[data-theme="light"] .page-content {
+  background-color: rgba(255, 255, 255, 0.85);
 }
 
 /* ===== Landing Page ===== */
@@ -230,6 +294,10 @@ a:hover, a:focus {
   border: 1px solid var(--color-border);
   max-width: 30rem;
   margin: 0 auto;
+}
+
+[data-theme="light"] .landing-overlay {
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .landing-name {
@@ -367,6 +435,17 @@ a:hover, a:focus {
   margin-bottom: 1.5rem;
 }
 
+[data-theme="light"] .research-section,
+[data-theme="light"] .code-project {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Recolor gold wireframe PNGs to navy blue in light theme */
+[data-theme="light"] .frame-anim img,
+[data-theme="light"] .project-demo {
+  filter: contrast(1.8) sepia(1) saturate(4) hue-rotate(190deg) brightness(0.45);
+}
+
 .research-section h2,
 .code-project h2 {
   margin-top: 0;
@@ -416,6 +495,10 @@ a:hover, a:focus {
   max-height: 600px;
   background-color: rgba(34, 34, 34, 0.85);
   border: 1px solid var(--color-border);
+}
+
+[data-theme="light"] .evie-container {
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .evie-header {

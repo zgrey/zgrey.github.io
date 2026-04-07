@@ -1,6 +1,9 @@
 <nav class="site-nav" aria-label="Main navigation">
   <div class="nav-inner">
-    <a href="/" class="nav-brand">zgrey</a>
+    <div class="nav-brand-group">
+      <a href="/" class="nav-brand">zgrey</a>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle light/dark theme">☀</button>
+    </div>
     <ul class="nav-links">
       <li><a href="/research/"{% if page.url == "/research/" %} class="active" aria-current="page"{% endif %}>research</a></li>
       <li><a href="/code/"{% if page.url == "/code/" %} class="active" aria-current="page"{% endif %}>code</a></li>

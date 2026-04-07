@@ -8,6 +8,21 @@ const ENABLE_SIMPLICIAL = false; // Random‑graph (simplicial) animation
 const ENABLE_AIRFOIL   = false; // Airfoil flow animation
 // =========================================
 
+// Theme-aware color helpers
+function getThemeColors() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  return {
+    gold: isLight ? '#3a3a5c' : '#A69C7D',
+    dimGreen: isLight ? '#dbeefa' : '#2d3d28',
+    green: isLight ? '#005ea2' : '#4a6741'
+  };
+}
+let _themeColors = getThemeColors();
+window.addEventListener('themechange', () => { _themeColors = getThemeColors(); });
+const COLOR_GOLD_F    = () => _themeColors.gold;
+const COLOR_DIM_GREEN_F = () => _themeColors.dimGreen;
+const COLOR_GREEN_F   = () => _themeColors.green;
+// Legacy constants (used where static value is fine)
 const COLOR_GOLD = '#A69C7D';
 const COLOR_DIM_GREEN = '#2d3d28';
 const COLOR_GREEN = '#4a6741';
@@ -43,7 +58,7 @@ class ASCIIRenderer {
 
   clear() {
     this.grid = Array.from({ length: this.rows }, () => Array(this.cols).fill(' '));
-    this.colorGrid = Array.from({ length: this.rows }, () => Array(this.cols).fill(COLOR_GOLD));
+    this.colorGrid = Array.from({ length: this.rows }, () => Array(this.cols).fill(COLOR_GOLD_F()));
   }
 
   setChar(r, c, ch, color) {
@@ -126,15 +141,15 @@ class VoronoiScene {
         const ratio = minD / (secondD + 0.001);
         if (ratio > 0.75) {
           const ch = boundaryChars[minI % boundaryChars.length];
-          renderer.setChar(r, c, ch, COLOR_GREEN);
+          renderer.setChar(r, c, ch, COLOR_GREEN_F());
         } else if (ratio > 0.5) {
-          renderer.setChar(r, c, '.', COLOR_DIM_GREEN);
+          renderer.setChar(r, c, '.', COLOR_DIM_GREEN_F());
         }
       }
     }
     // Mark seed points
     for (const s of this.seeds) {
-      renderer.setChar(Math.round(s.y), Math.round(s.x), '*', COLOR_GREEN);
+      renderer.setChar(Math.round(s.y), Math.round(s.x), '*', COLOR_GREEN_F());
     }
   }
 }
@@ -214,7 +229,7 @@ class SimplicialScene {
     }
     // Draw vertices
     for (const v of this.vertices) {
-      renderer.setChar(Math.round(v.y), Math.round(v.x), 'o', COLOR_GOLD);
+      renderer.setChar(Math.round(v.y), Math.round(v.x), 'o', COLOR_GOLD_F());
     }
   }
 
@@ -235,7 +250,7 @@ class SimplicialScene {
       else if (dy > dx * 2) ch = lineChars.v;
       else ch = (sx === sy) ? lineChars.d2 : lineChars.d1;
 
-      renderer.setChar(cy, cx, ch, COLOR_DIM_GREEN);
+      renderer.setChar(cy, cx, ch, COLOR_DIM_GREEN_F());
 
       if (cx === x1 && cy === y1) break;
       const e2 = 2 * err;
@@ -334,11 +349,11 @@ class AirfoilScene {
       const c = Math.round(ap.gx);
       const rU = Math.round(ap.upper);
       const rL = Math.round(ap.lower);
-      renderer.setChar(rU, c, '#', COLOR_GOLD);
-      renderer.setChar(rL, c, '#', COLOR_GOLD);
+      renderer.setChar(rU, c, '#', COLOR_GOLD_F());
+      renderer.setChar(rL, c, '#', COLOR_GOLD_F());
       // Fill interior
       for (let r = rU + 1; r < rL; r++) {
-        renderer.setChar(r, c, '.', COLOR_DIM_GREEN);
+        renderer.setChar(r, c, '.', COLOR_DIM_GREEN_F());
       }
     }
 
@@ -350,7 +365,7 @@ class AirfoilScene {
       if (p.vy > 0.15) ch = '\\';
       else if (p.vy < -0.15) ch = '/';
       else if (Math.abs(p.vy) > 0.05) ch = '~';
-      renderer.setChar(r, c, ch, COLOR_GREEN);
+      renderer.setChar(r, c, ch, COLOR_GREEN_F());
     }
   }
 }
