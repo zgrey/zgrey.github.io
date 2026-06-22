@@ -94,16 +94,20 @@ def rot_z_to(n):
     return np.eye(3) + vx + vx @ vx * (1.0 / (1.0 + c))
 
 
-def make_data(n=9):
-    """Random ambient points (unnormalized) clustered around a centre dir."""
-    c = unit(np.array([0.5, 0.35, 1.0]))
+def make_data(n=20):
+    """Random ambient points (unnormalized) spread over an upper-hemisphere cap
+    that faces the initial camera, so the cloud is easy to perceive and not
+    hidden behind the sphere."""
+    c = unit(np.array([0.30, -0.42, 1.0]))      # upper hemisphere, toward camera
     e1, e2 = tangent_basis(R * c)
     amb, sph = [], []
+    rmax = 1.45                                 # tangent mag; cap half-angle ~ rmax/R = 42 deg
     for _ in range(n):
-        ang = 0.42 * RNG.standard_normal(2)
-        v = ang[0] * e1 + ang[1] * e2
-        q = exp_map(R * c, v)              # on sphere near centre
-        rad = R + RNG.uniform(0.6, 1.5)    # push out into ambient space
+        rr = rmax * np.sqrt(RNG.uniform(0.04, 1.0))   # area-uniform fill of cap
+        az = RNG.uniform(0.0, 2 * np.pi)
+        v = rr * np.cos(az) * e1 + 0.62 * rr * np.sin(az) * e2   # mild anisotropy
+        q = exp_map(R * c, v)
+        rad = R + RNG.uniform(0.55, 1.25)        # push out into ambient space
         amb.append(rad * (q / R))
         sph.append(q)
     return np.array(amb), np.array(sph)
@@ -111,16 +115,17 @@ def make_data(n=9):
 
 class TangentPCA(ThreeDScene):
     def construct(self):
-        self.set_camera_orientation(phi=64 * DEGREES, theta=-54 * DEGREES)
+        self.set_camera_orientation(phi=58 * DEGREES, theta=-56 * DEGREES)
         axes = ThreeDAxes(x_range=[-3, 3], y_range=[-3, 3], z_range=[-3, 3])
-        sphere = Sphere(radius=R, resolution=(28, 28)).set_opacity(0.18).set_color(BLUE_E)
+        sphere = Sphere(radius=R, resolution=(28, 28)).set_opacity(0.10).set_color(BLUE_E)
         self.play(Create(axes), Create(sphere), run_time=1.2)
 
         cap = Text("Exp / Log maps", font_size=26, color=BLUE_D).to_corner(UL)
         self.add_fixed_in_frame_mobjects(cap)
+        self.caption = cap
 
         # ---- 1. Exp / Log demo on one base point ----
-        pe = R * unit(np.array([-0.55, -0.5, 0.65]))
+        pe = R * unit(np.array([0.4, -0.3, 0.9]))
         ve_dir = tangent_basis(pe)[0]
         ve = 1.5 * ve_dir
         qe = exp_map(pe, ve)
@@ -136,14 +141,14 @@ class TangentPCA(ThreeDScene):
 
         # ---- 2. random unnormalized ambient points ----
         amb, sph = make_data(9)
-        self._swap_cap(cap, "random points in ambient space", GREY_B)
-        amb_dots = VGroup(*[Dot3D(x, color=GREY_B, radius=0.06) for x in amb])
+        self._swap_cap("random points in ambient space", GREY_B)
+        amb_dots = VGroup(*[Dot3D(x, color=GREY_B, radius=0.075) for x in amb])
         fibers = VGroup(*[Line3D(amb[i], sph[i], color=GREY_B, stroke_width=1.5)
                           for i in range(len(amb))])
         self.play(*[FadeIn(d) for d in amb_dots], run_time=1.0)
 
         # ---- 3. descend along radial fibers onto the sphere ----
-        self._swap_cap(cap, "normalize onto the sphere (radial fibers)", GREY_B)
+        self._swap_cap("normalize onto the sphere (radial fibers)", GREY_B)
         for f in fibers:
             f.set_opacity(0.5)
         self.play(*[Create(f) for f in fibers], run_time=0.8)
@@ -153,7 +158,7 @@ class TangentPCA(ThreeDScene):
         data_dots = amb_dots  # now on the sphere
 
         # ---- 4. Karcher-mean iteration with a comet tail ----
-        self._swap_cap(cap, "Karcher mean (geodesic averaging)", ORANGE)
+        self._swap_cap("Karcher mean (geodesic averaging)", ORANGE)
         p_init = R * unit(np.array([-0.7, 0.6, 0.55]))
         p_star, traj = karcher(sph, p_init, iters=7)
         kdot = Dot3D(p_init, color=ORANGE, radius=0.09)
@@ -180,7 +185,7 @@ class TangentPCA(ThreeDScene):
         e1, e2 = tangent_basis(p_star)
 
         # ---- 5. tangent space ----
-        self._swap_cap(cap, "tangent space at the mean", WHITE)
+        self._swap_cap("tangent space at the mean", WHITE)
         coords = np.array([[float(np.dot(log_map(p_star, q), e1)),
                             float(np.dot(log_map(p_star, q), e2))] for q in sph])
         rmax = float(np.max(np.hypot(coords[:, 0], coords[:, 1]))) * 1.35
@@ -190,7 +195,7 @@ class TangentPCA(ThreeDScene):
         self.play(GrowFromCenter(disk))
 
         # ---- 6. Log-map arrows ----
-        self._swap_cap(cap, "Log map: data into the tangent space", GREEN)
+        self._swap_cap("Log map: data into the tangent space", GREEN)
         log_arrows = VGroup()
         for q in sph:
             v = log_map(p_star, q)
@@ -199,7 +204,7 @@ class TangentPCA(ThreeDScene):
         self.wait(0.4)
 
         # ---- 7/8. tPCA basis replaces the Log vectors ----
-        self._swap_cap(cap, "tPCA basis (principal tangent directions)", YELLOW)
+        self._swap_cap("tPCA basis (principal tangent directions)", YELLOW)
         cov = (coords.T @ coords) / len(coords)
         evals, evecs = np.linalg.eigh(cov)        # ascending
         order = np.argsort(evals)[::-1]
@@ -215,7 +220,7 @@ class TangentPCA(ThreeDScene):
         self.wait(0.3)
 
         # ---- 9. covariance ellipse ----
-        self._swap_cap(cap, "covariance ellipse", YELLOW)
+        self._swap_cap("covariance ellipse", YELLOW)
         s1, s2 = k_scale * np.sqrt(max(evals[0], 1e-6)), k_scale * np.sqrt(max(evals[1], 1e-6))
         w1 = evecs[0, 0] * e1 + evecs[1, 0] * e2
         w2 = evecs[0, 1] * e1 + evecs[1, 1] * e2
@@ -226,19 +231,21 @@ class TangentPCA(ThreeDScene):
         self.wait(0.4)
 
         # ---- 10. morph ellipse -> 2D KDE of the Log points ----
-        self._swap_cap(cap, "kernel density estimate on the tangent space", GREEN_B)
+        self._swap_cap("kernel density estimate on the tangent space", GREEN_B)
         kde = self._build_kde(p_star, e1, e2, coords, rmax, pn)
         self.play(ReplacementTransform(ellipse, kde),
                   FadeOut(basis_arrows), FadeOut(disk), run_time=1.6)
         self.wait(1.5)
 
     # ---- helpers ----
-    def _swap_cap(self, cap, text, color):
+    def _swap_cap(self, text, color):
+        # Cross-fade so exactly ONE caption is ever on screen (no stacking):
+        # explicitly fade out the current caption and fade in the new one.
         new = Text(text, font_size=26, color=color).to_corner(UL)
+        new.set_opacity(0)
         self.add_fixed_in_frame_mobjects(new)
-        self.play(ReplacementTransform(cap, new), run_time=0.5)
-        cap.become(new)  # keep the reference current
-        return new
+        self.play(FadeOut(self.caption), FadeIn(new), run_time=0.5)
+        self.caption = new
 
     def _build_kde(self, p0, e1, e2, coords, rmax, pn):
         M = 13
