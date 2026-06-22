@@ -755,6 +755,27 @@ a:hover, a:focus {
 .sst-block .sst-claim { color: var(--color-accent-hover); }
 .sst-block .sst-note { color: var(--color-text-secondary); }
 
+/* Light mode: keep the SST narrative in ONE blue family. The site's default
+   light heading (#0b2d71 navy) and near-black body/math clash with the accent
+   blues; here we retone them to harmonize (scoped to .sst only). */
+[data-theme="light"] .sst {
+  --color-text-heading: #0a4f93;   /* leads + titles -> blue, near the accent */
+  color: #213a57;                  /* body prose + math -> dark blue-slate */
+}
+
+/* image -> curves -> distribution chain: wraps cleanly on narrow screens */
+.sst-chain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  margin: 0.85rem 0;
+}
+.sst-chain .sst-arrow { color: var(--color-accent-primary); font-weight: 700; }
+
+/* wide display equations scroll within their block instead of breaking layout */
+.sst-block .katex-display { overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+
 /* beautiful enter: block rises + fades; its fragments cascade in with stagger */
 @keyframes sstBlockIn { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 @keyframes sstFragIn { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: none; filter: blur(0); } }

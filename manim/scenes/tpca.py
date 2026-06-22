@@ -94,7 +94,7 @@ def rot_z_to(n):
     return np.eye(3) + vx + vx @ vx * (1.0 / (1.0 + c))
 
 
-def make_data(n=20):
+def make_data(n=26):
     """Random ambient points (unnormalized) spread over an upper-hemisphere cap
     that faces the initial camera, so the cloud is easy to perceive and not
     hidden behind the sphere."""
@@ -103,11 +103,11 @@ def make_data(n=20):
     amb, sph = [], []
     rmax = 1.45                                 # tangent mag; cap half-angle ~ rmax/R = 42 deg
     for _ in range(n):
-        rr = rmax * np.sqrt(RNG.uniform(0.04, 1.0))   # area-uniform fill of cap
+        rr = rmax * np.sqrt(RNG.uniform(0.06, 1.0))   # area-uniform fill of cap
         az = RNG.uniform(0.0, 2 * np.pi)
-        v = rr * np.cos(az) * e1 + 0.62 * rr * np.sin(az) * e2   # mild anisotropy
+        v = rr * np.cos(az) * e1 + 0.72 * rr * np.sin(az) * e2   # mild anisotropy
         q = exp_map(R * c, v)
-        rad = R + RNG.uniform(0.55, 1.25)        # push out into ambient space
+        rad = R + RNG.uniform(0.70, 1.05)        # tighter shell -> less depth overlap
         amb.append(rad * (q / R))
         sph.append(q)
     return np.array(amb), np.array(sph)
@@ -115,7 +115,11 @@ def make_data(n=20):
 
 class TangentPCA(ThreeDScene):
     def construct(self):
-        self.set_camera_orientation(phi=58 * DEGREES, theta=-56 * DEGREES)
+        phi0, theta0 = 58 * DEGREES, -56 * DEGREES
+        self.set_camera_orientation(phi=phi0, theta=theta0)
+        # unit vector from origin toward the camera (the near side of the sphere)
+        cam_dir = np.array([np.sin(phi0) * np.cos(theta0),
+                            np.sin(phi0) * np.sin(theta0), np.cos(phi0)])
         axes = ThreeDAxes(x_range=[-3, 3], y_range=[-3, 3], z_range=[-3, 3])
         sphere = Sphere(radius=R, resolution=(28, 28)).set_opacity(0.10).set_color(BLUE_E)
         self.play(Create(axes), Create(sphere), run_time=1.2)
@@ -124,25 +128,30 @@ class TangentPCA(ThreeDScene):
         self.add_fixed_in_frame_mobjects(cap)
         self.caption = cap
 
-        # ---- 1. Exp / Log demo on one base point ----
-        pe = R * unit(np.array([0.4, -0.3, 0.9]))
-        ve_dir = tangent_basis(pe)[0]
-        ve = 1.5 * ve_dir
+        # ---- 1. Exp / Log demo: a long geodesic across the near face ----
+        # Base point faces the camera; sweep "up" so the whole arc stays on the
+        # near side of the sphere (~80 deg of arc, much longer than a small step).
+        pe = R * cam_dir
+        pen = pe / R
+        e_up = unit(np.array([0.0, 0.0, 1.0]) - np.dot(np.array([0.0, 0.0, 1.0]), pen) * pen)
+        arc = 1.4                                   # geodesic arc-angle (rad) ~ 80 deg
+        ve = R * arc * e_up                         # tangent magnitude = arc length
         qe = exp_map(pe, ve)
-        pdot = Dot3D(pe, color=YELLOW, radius=0.07)
-        tan = Arrow3D(pe, pe + ve, color=GREEN)
+        pdot = Dot3D(pe, color=YELLOW, radius=0.08)
+        # tangent arrow drawn at a fixed display length (direction indicator)
+        tan = Arrow3D(pe, pe + 1.2 * e_up, color=GREEN)
         geo = ParametricFunction(lambda a: exp_map(pe, a * ve), t_range=[0, 1], color=ORANGE)
-        qdot = Dot3D(qe, color=RED, radius=0.07)
+        qdot = Dot3D(qe, color=RED, radius=0.08)
         self.play(FadeIn(pdot))
         self.play(Create(tan))
-        self.play(Create(geo), FadeIn(qdot), run_time=1.4)
+        self.play(Create(geo), FadeIn(qdot), run_time=1.8)
         self.wait(0.6)
         self.play(FadeOut(VGroup(pdot, tan, geo, qdot)))
 
         # ---- 2. random unnormalized ambient points ----
-        amb, sph = make_data(9)
+        amb, sph = make_data(26)
         self._swap_cap("random points in ambient space", GREY_B)
-        amb_dots = VGroup(*[Dot3D(x, color=GREY_B, radius=0.075) for x in amb])
+        amb_dots = VGroup(*[Dot3D(x, color=GREY_B, radius=0.08) for x in amb])
         fibers = VGroup(*[Line3D(amb[i], sph[i], color=GREY_B, stroke_width=1.5)
                           for i in range(len(amb))])
         self.play(*[FadeIn(d) for d in amb_dots], run_time=1.0)
