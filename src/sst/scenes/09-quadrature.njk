@@ -1,0 +1,27 @@
+---
+id: quadrature
+seq: 9
+spine: 9
+act: Shape Analysis
+title: Approximations — not Monte Carlo
+mount: none
+choices:
+  - label: "See the polar decomposition (interactive) →"
+    target: srqd
+  - label: "↩ back to dual forms"
+    target: rkhs-dual
+---
+<p class="sst-lead">Discretize the integral with a <strong>quadrature rule</strong> \(\{(w_i, s_i)\}\) &mdash;
+deterministic nodes and weights, not random samples.</p>
+
+<p>\[ \int_{\mathcal{I}} f(s)\, d\mu(s) \approx \sum_i w_i\, f(s_i). \]</p>
+
+<div class="sst-frag">
+  <p>Stack the weighted, centered landmarks. The eigenproblem becomes a matrix factorization,</p>
+  <p>\[ \sqrt{W}\,\mathcal{T}[\bm{c}^{\top}](\{s_i\}) = \widetilde{V}(\{s_i\})\,P(\tilde\sigma). \]</p>
+</div>
+
+<div class="sst-frag">
+  <p class="sst-claim">Because the curve is smooth, quadrature converges <em>spectrally</em> &mdash; far faster than
+  the \(1/\sqrt{n}\) of Monte Carlo. You'll watch that convergence two scenes from now.</p>
+</div>

@@ -1,0 +1,29 @@
+---
+id: chips-outlook
+seq: 16
+act: Chips & Defects
+title: What's Still Open
+mount: none
+choices:
+  - label: "↻ replay this spoke"
+    target: chips-problem
+  - label: "⌂ back to the hub"
+    target: hub
+---
+<p class="sst-lead">The artifact / defect decomposition turns "these look different" into an actionable,
+statistically grounded claim &mdash; but two questions keep it honest.</p>
+
+<div class="sst-frag">
+  <p>Is the combined discrepancy significant against the separate channels?</p>
+  <p>\[ \mathrm{MMD}[\mathcal{F},\,\rho_A\rho_D,\,\rho_{AD}] \;\overset{?}{\gg}\; 0 \]</p>
+</div>
+
+<div class="sst-frag">
+  <p>And does distance beyond a tolerance certify a defect?</p>
+  <p>\[ d(\{AD\},\{A\}) > T \;\overset{?}{\Longrightarrow}\; \{D\} \]</p>
+</div>
+
+<div class="sst-frag">
+  <p class="sst-note">This spoke reused the entire prologue &mdash; transform, RKHS, SRQD, manifold features &mdash; and
+  added only the MMD decision layer. Other spokes (EBSD grains, airfoils, hailstones, TDA) branch the same way.</p>
+</div>

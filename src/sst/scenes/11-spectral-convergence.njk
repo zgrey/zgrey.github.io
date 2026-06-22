@@ -1,0 +1,23 @@
+---
+id: spectral-convergence
+seq: 11
+spine: 11
+act: Shape Analysis
+title: Spectral Convergence
+mount: widget:nystrom
+choices:
+  - label: "Onto the shape manifold →"
+    target: fiber-bundle
+  - label: "↩ back to the polar decomposition"
+    target: srqd
+---
+<p class="sst-lead">The Nyström approximation reconstructs the curve's scale operator \(P\) from \(n\) quadrature
+nodes. Here the boundary is a pinched <strong>Cassini oval</strong>; slide \(n\) and watch the error to the true
+operator collapse on <strong>log&ndash;log</strong> axes.</p>
+
+<p>\[ \big\|P_n - P_\infty\big\|_F \longrightarrow 0 \quad\text{(spectrally, for analytic }\bm{c}). \]</p>
+
+<div class="sst-frag">
+  <p class="sst-note">The waist makes the Cassini harder than a round curve, yet the error still plunges far faster
+  than the \(1/\sqrt{n}\) of Monte Carlo &mdash; what makes SST cheap enough for tens of thousands of shapes.</p>
+</div>

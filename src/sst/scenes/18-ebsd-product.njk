@@ -1,0 +1,24 @@
+---
+id: ebsd-product
+seq: 18
+act: EBSD Grains
+title: The Product Test &mdash; Explainability
+mount: widget:product-mmd
+choices:
+  - label: "When does the verdict get shaky? →"
+    target: ebsd-landscape
+  - label: "↩ back to the problem"
+    target: ebsd-problem
+---
+<p class="sst-lead">Separability pays off here. Run a calibrated MMD test on the <strong>undulation</strong> channel
+\(\bm{t}\) and, independently, on the <strong>scale</strong> channel \(\bm{\ell}\).</p>
+
+<p>\[ \mathrm{pMMD}[\mathcal{H}\otimes\mathcal{Q},\hat{\bm{\rho}},\check{\bm{\rho}}] \;\Rightarrow\;
+\text{FTR} \iff \big(H_0^{\bm{t}}\;\text{FTR}\big)\wedge\big(H_0^{\bm{\ell}}\;\text{FTR}\big). \]</p>
+
+<div class="sst-frag">
+  <p>The product fails to reject <em>only</em> when both channels do. Otherwise the rejecting channel <em>names the
+  cause</em>: a difference in undulation (nonlinear) or in scale (linear). That's the "explainable" in EBC.</p>
+  <p class="sst-note">Drive the two sliders: the highlighted truth-table cell and the verdict line track the
+  four logical cases \((1\wedge1,\,1\wedge0,\,0\wedge1,\,0\wedge0)\).</p>
+</div>

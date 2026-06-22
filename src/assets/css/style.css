@@ -656,3 +656,299 @@ a:hover, a:focus {
     margin-top: 1rem;
   }
 }
+
+/* ===== SST Adventure (interactive scene-graph presentation) ===== */
+/* BACKGROUND VEIL LEVER (slider removed — adjust here in code):
+   --sst-veil  0 = moving background fully visible, 1 = fully obscured (locked 0.5)
+   --sst-blur  backdrop blur radius; a sensible pairing is veil*12px (0.5 -> 6px). */
+.sst {
+  --sst-veil: 0.5;
+  --sst-blur: 6px;
+  position: relative;
+  isolation: isolate;
+  max-width: 64rem;
+  margin: 1.5rem auto 3rem;
+  padding: 1.25rem 1.5rem 1.75rem;
+}
+
+/* semi-transparent, blurred scrim so slide text stays legible over the moving
+   ascii canvas while the motion still shows through */
+.sst::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg-primary) calc(var(--sst-veil) * 100%), transparent);
+  -webkit-backdrop-filter: blur(var(--sst-blur));
+  backdrop-filter: blur(var(--sst-blur));
+  transition: background 0.15s linear;
+}
+
+/* generic in-widget slider */
+.sst-range {
+  accent-color: var(--color-accent-primary);
+  cursor: ew-resize;
+}
+
+.sst-bar {
+  position: sticky;
+  top: 2.8rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0.7rem;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.sst-bar-left { display: flex; align-items: baseline; gap: 0.6rem; min-width: 0; overflow: hidden; }
+.sst-act {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-primary);
+  white-space: nowrap;
+}
+.sst-title { color: var(--color-text-heading); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sst-bar-right { display: flex; gap: 0.4rem; flex-shrink: 0; }
+
+.sst-btn {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.sst-btn:hover, .sst-btn:focus { color: var(--color-accent-hover); border-color: var(--color-accent-primary); }
+
+/* transcript: a growing scroll of scene blocks (newest at the bottom) */
+.sst-transcript { outline: none; }
+
+.sst-block {
+  min-height: 64vh;
+  padding: 2.25rem 0.25rem 2.75rem;
+  border-top: 1px solid var(--color-border);
+  scroll-margin-top: 4.5rem;
+}
+.sst-block:first-child { border-top: none; }
+.sst-block-act {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent-primary);
+  margin-bottom: 0.35rem;
+}
+.sst-block-title { color: var(--color-text-heading); font-weight: 500; margin-bottom: 1rem; }
+
+/* UNIFORM TYPOGRAPHY: emphasis is by COLOR/weight only, never size.
+   (Body text inherits the site's 0.9rem; do not set font-size on prose here.) */
+.sst-block .sst-lead { color: var(--color-text-heading); }
+.sst-block .sst-claim { color: var(--color-accent-hover); }
+.sst-block .sst-note { color: var(--color-text-secondary); }
+
+/* beautiful enter: block rises + fades; its fragments cascade in with stagger */
+@keyframes sstBlockIn { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@keyframes sstFragIn { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: none; filter: blur(0); } }
+
+.sst-block.is-in { animation: sstBlockIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.sst-frag, .sst-block > .sst-choices { opacity: 0; }
+/* per-fragment animation-delay is set in player.js for a correct cascade */
+.sst-block.is-in .sst-frag { animation: sstFragIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sst-block.is-in, .sst-block.is-in .sst-frag, .sst-block.is-in > .sst-choices { animation-duration: 0.01s; }
+}
+
+/* choices (per block) */
+.sst-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+.sst-block.is-in > .sst-choices { animation: sstFragIn 0.6s ease 0.6s both; }
+.sst-choices.is-spent { opacity: 0.5; }
+.sst-choice {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-align: left;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent-primary);
+  border-radius: 4px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.sst-choice:hover, .sst-choice:focus {
+  background: var(--color-accent-dim);
+  border-left-color: var(--color-accent-hover);
+}
+
+/* widget host */
+.sst-widget { margin-top: 1.25rem; }
+
+/* pre-rendered Manim set-piece */
+.sst-video { margin: 1.25rem 0 0; text-align: center; }
+.sst-video video {
+  display: block;
+  max-width: 100%;
+  margin: 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+}
+.sst-video figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* invariance demo widget */
+.sst-iv { display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: flex-start; }
+.sst-iv-canvas {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  max-width: 100%;
+  touch-action: none;
+}
+.sst-iv-side { flex: 1; min-width: 12rem; }
+.sst-iv-readout { display: grid; gap: 0.3rem; margin-bottom: 1rem; }
+.sst-iv-readout > div { display: flex; justify-content: space-between; gap: 1rem; }
+.sst-iv-k { color: var(--color-text-secondary); font-size: 0.8rem; }
+.sst-iv-v { color: var(--color-accent-hover); font-variant-numeric: tabular-nums; }
+.sst-iv-controls { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.sst-iv-controls button {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+.sst-iv-controls button:hover { color: var(--color-accent-hover); border-color: var(--color-accent-primary); }
+.sst-iv-hint { font-size: 0.8rem; color: var(--color-text-secondary); margin-top: 0.75rem; }
+
+/* two-panel widgets (svd-polar, nystrom) */
+.sst-sp-panels { display: flex; flex-wrap: wrap; gap: 1rem; }
+.sst-sp-panels figure { margin: 0; }
+.sst-sp-panels figcaption {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-top: 0.3rem;
+}
+.sst-iv-range-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  margin: 0.5rem 0;
+}
+.sst-iv-range-row .sst-range { width: 9rem; }
+
+/* animated operations widget (op-curve): algebra synced to a curve action */
+.sst-op { display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: flex-start; }
+.sst-op-algebra { flex: 1; min-width: 14rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.sst-op-line {
+  padding: 0.45rem 0.65rem;
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  opacity: 0.4;
+  transition: opacity 0.4s ease, color 0.4s ease, background 0.4s ease, border-color 0.4s ease;
+}
+.sst-op-line.is-active {
+  opacity: 1;
+  color: var(--color-text-heading);
+  background: var(--color-bg-secondary);
+  border-left-color: var(--color-accent-primary);
+}
+.sst-op-line.is-done { opacity: 0.75; }
+.sst-op-controls { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+.sst-op-controls button {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+.sst-op-controls button:hover { color: var(--color-accent-hover); border-color: var(--color-accent-primary); }
+.sst-op-controls button[disabled] { opacity: 0.4; cursor: default; }
+
+/* product-MMD truth table (explainable classification) */
+.sst-pm-channels { display: flex; flex-wrap: wrap; gap: 1.25rem; }
+.sst-pm-ch { flex: 1; min-width: 14rem; }
+.sst-pm-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.sst-pm-name { color: var(--color-text-heading); }
+.sst-pm-badge { font-variant-numeric: tabular-nums; font-weight: 500; }
+.sst-pm-table { border-collapse: collapse; margin: 1.1rem 0 0.6rem; font-size: 0.8rem; }
+.sst-pm-table th, .sst-pm-table td {
+  border: 1px solid var(--color-border);
+  padding: 0.35rem 0.6rem;
+  text-align: center;
+}
+.sst-pm-table th { color: var(--color-text-secondary); font-weight: 500; }
+.sst-pm-corner { border: none; }
+.sst-pm-table td { color: var(--color-text-secondary); }
+.sst-pm-table td.is-cell-active {
+  background: var(--color-accent-dim);
+  color: var(--color-text-heading);
+  outline: 2px solid var(--color-accent-primary);
+}
+.sst-pm-verdict { color: var(--color-text-heading); margin: 0.3rem 0 0.6rem; }
+
+/* adventure map */
+.sst-mapwrap { max-width: 64rem; }
+.sst-maphint { color: var(--color-text-secondary); font-size: 0.85rem; margin: 1rem 0; }
+.sst-map { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.sst-map-act {
+  flex: 1;
+  min-width: 14rem;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+.sst-map-act h3 { margin-top: 0; color: var(--color-accent-primary); font-size: 0.95rem; }
+.sst-map-node {
+  display: block;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent-primary);
+  border-radius: 4px;
+  padding: 0.5rem 0.7rem;
+  margin-bottom: 0.6rem;
+}
+.sst-map-node:hover { border-left-color: var(--color-accent-hover); }
+.sst-map-node-title { display: block; color: var(--color-text-heading); font-size: 0.85rem; }
+.sst-map-edges { display: block; color: var(--color-text-secondary); font-size: 0.72rem; margin-top: 0.2rem; }
+
+.sst:fullscreen, .sst:-webkit-full-screen {
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 1rem 8vw 2rem;
+  background: var(--color-bg-primary);
+  overflow-y: auto;
+}
+.sst:fullscreen .sst-bar, .sst:-webkit-full-screen .sst-bar { top: 0; }

@@ -1,0 +1,36 @@
+---
+id: prrti-invariance
+seq: 6
+spine: 6
+act: Shape Analysis
+title: PRRTI &mdash; See the Invariance
+mount: widget:invariance-demo
+choices:
+  - label: "So what's the eigenproblem behind this? →"
+    target: curve-eigenproblem
+  - label: "↩ back to the CLO"
+    target: clo-transform
+---
+<p class="sst-lead">Apply a <strong>rigid motion</strong> (rotate / reflect / translate). The shape moves on the canvas,
+but the PRRTI invariants &mdash; the singular values \((\sigma_1,\sigma_2)\) <em>and</em> the eigenfunctions
+\(\widetilde{v}_j(s)\), the columns of \(\widetilde{V}\) &mdash; <strong>do not budge</strong>.</p>
+
+<div class="sst-frag">
+  <p>\[ k_{\mathcal{T}}[R\bm{c}+\bm{b}]=\big(R\,\mathcal{T}[\bm{c}]\big)\cdot\big(R\,\mathcal{T}[\bm{c}]\big)
+  =\mathcal{T}[\bm{c}]\cdot\big(R^{\top}R\,\mathcal{T}[\bm{c}]\big)=k_{\mathcal{T}}[\bm{c}]. \]</p>
+  <p>The right panel plots the eigenfunctions \(\widetilde{v}_j(s)=\tfrac{1}{\sigma_j}\,\bm{\alpha}_j\cdot\mathcal{T}[\bm{c}](s)\).
+  Under a rigid motion they hold still &mdash; <strong>by uniqueness of the polar decomposition</strong>
+  \(X=\widetilde{X}P\), the rotation is absorbed into the principal directions \(\bm{\alpha}_j\) (drawn on the
+  curve), leaving the undulation class \([\widetilde{X}]\in\mathrm{Gr}(2,n)\) fixed.</p>
+  <p class="sst-note">Equivalently one may fix canonical \(\bm{\alpha}_j=\bm{e}_j\) by hand; then a rotation
+  <em>phase-shifts</em> \(\widetilde{v}_j(s)\mapsto\widetilde{v}_j(s+\theta)\) instead &mdash; the same equivalence
+  class, a different chart.</p>
+</div>
+
+<div class="sst-frag">
+  <p>The one freedom no convention removes is the <strong>cyclic reparametrization</strong>: press
+  <strong>permute</strong> and the eigenfunctions genuinely phase-shift. That ambiguity is settled later by
+  <strong>cyclic Procrustes</strong> alignment, not here.</p>
+  <p class="sst-note">Drag a landmark and the eigenfunctions <em>do</em> change &mdash; that is genuine
+  <strong>undulation</strong>, the shape content SST is built to measure.</p>
+</div>

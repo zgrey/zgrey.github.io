@@ -61,6 +61,11 @@
         if (typeof window.initAirfoilAnim === 'function') {
           window.initAirfoilAnim();
         }
+
+        // Re-initialize the SST adventure player if present in new content
+        if (typeof window.initSST === 'function') {
+          window.initSST();
+        }
       })
       .catch(() => {
         // Fallback to normal navigation on error

@@ -1,0 +1,28 @@
+---
+id: curve-eigenproblem
+seq: 7
+spine: 7
+act: Shape Analysis
+title: The Curve Eigenproblem
+mount: none
+choices:
+  - label: "What do the eigenfunctions mean? →"
+    target: rkhs-dual
+  - label: "↩ back to PRRTI"
+    target: prrti-invariance
+---
+<p class="sst-lead">Treat the CLO as an integral kernel. Its eigenfunctions are a second-kind, homogeneous
+Fredholm integral equation,</p>
+
+<p>\[ (\mathcal{K}_{\mathcal{T}}\,v)[\bm{c}](s) = \sigma^2\, v(s). \]</p>
+
+<div class="sst-frag">
+  <p>In words:</p>
+  <blockquote>Encode all pairwise angles (<em>rigid invariance</em>) between <em>centered landmarks</em> generated
+  by the curve, <em>separated from scale</em>.</blockquote>
+</div>
+
+<div class="sst-frag">
+  <p>Equivalently, in the inner-product form over the Hilbert space \(\mathcal{H}_d\),</p>
+  <p>\[ \langle k_{\mathcal{T}}[\bm{c}](s,\cdot),\, v\rangle_{\mathcal{H}_d} = \sigma^2\, v(s). \]</p>
+</div>

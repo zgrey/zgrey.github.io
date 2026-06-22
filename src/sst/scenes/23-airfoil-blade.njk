@@ -1,0 +1,29 @@
+---
+id: airfoil-blade
+seq: 23
+act: Airfoils / G2Aero
+title: Building the Blade
+mount: widget:blade-interp
+choices:
+  - label: "Where does this go next? →"
+    target: airfoil-outlook
+  - label: "↩ back to the ridge"
+    target: airfoil-ridge
+---
+<p class="sst-lead">Make the parametrization <em>intrinsic</em>: treat each airfoil as a centred landmark matrix and
+take its polar decomposition &mdash; the very split from the prologue.</p>
+
+<p>\[ X = \widetilde{X}\,P,\qquad [\widetilde{X}]\in\mathrm{Gr}(2,n)\ \text{(undulation)},\quad P\in\mathcal{S}^2_{++}\ \text{(scale)}. \]</p>
+
+<div class="sst-frag">
+  <p>To build a 3-D blade from 2-D cross-sections, <strong>interpolate each factor along its own manifold</strong>:
+  a <strong>Grassmann geodesic</strong> for the undulation, an <strong>SPD geodesic</strong> for the scale, then
+  reconstruct \(X=\widetilde{X}P\) at every span station.</p>
+  <p class="sst-note">This is G2Aero. The widget runs the real geodesics (not a sketch): watch the cross-section
+  morph above as the blade is laid down span-wise below.</p>
+</div>
+
+<div class="sst-frag">
+  <p>The active-subspace idea generalizes too: <strong>active manifold-geodesics</strong> (AMG) replace the average
+  gradient outer product with one that respects the geometry &mdash; intrinsic ridges on the shape manifold.</p>
+</div>

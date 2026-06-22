@@ -3,3 +3,9 @@ _site/
 .DS_Store
 *.log
 .claude/
+
+# Manim (set-piece rendering)
+.venv/
+manim/.media/
+__pycache__/
+*.pyc

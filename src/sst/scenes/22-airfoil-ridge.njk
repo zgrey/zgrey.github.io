@@ -1,0 +1,21 @@
+---
+id: airfoil-ridge
+seq: 22
+act: Airfoils / G2Aero
+title: Finding the Ridge
+mount: widget:ridge-function
+choices:
+  - label: "From subspace to shape manifold →"
+    target: airfoil-blade
+  - label: "↩ back to the setup"
+    target: airfoil-problem
+---
+<p class="sst-lead">A ridge hides in plain sight. Project the data onto a guessed direction \(u\) and look at the
+<strong>sufficient summary plot</strong>, \(f\) vs \(u^{\top}x\).</p>
+
+<div class="sst-frag">
+  <p>Rotate \(u\). Off the active direction, the points are a cloud &mdash; the same \(u^{\top}x\) maps to many
+  \(f\) values. On it, they <strong>collapse to a single curve</strong> \(g\): the function really is 1-D.</p>
+  <p class="sst-note">That collapse is dimension reduction made visible. (The spread bottoms out at a small nonzero
+  value here &mdash; an artifact of binning the residual, left honest rather than rounded to zero.)</p>
+</div>

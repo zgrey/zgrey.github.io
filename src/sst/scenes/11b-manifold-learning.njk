@@ -1,0 +1,26 @@
+---
+id: manifold-learning
+seq: 11.6
+spine: 11.6
+act: Manifold Learning
+title: Learning a Data-Driven Domain
+mount: video:tpca
+choices:
+  - label: "Prologue complete → choose your path"
+    target: hub
+  - label: "↩ back to the projection"
+    target: fiber-bundle
+---
+<p class="sst-lead">On a manifold we move along <strong>geodesics</strong>. The exponential and logarithm maps trade
+between the curved space and its flat tangent space at a point.</p>
+
+<p>\[ \mathrm{Exp}_p:\, T_p\mathcal{M}\to\mathcal{M},\qquad \mathrm{Log}_p:\,\mathcal{M}\to T_p\mathcal{M}. \]</p>
+
+<div class="sst-frag">
+  <p>The animation walks the whole <strong>tangent PCA</strong> pipeline: raw points normalize onto the manifold,
+  an iterative <strong>Karcher mean</strong> finds their geodesic centroid, the \(\mathrm{Log}\) map carries them into
+  the tangent space, and PCA there yields <em>normal coordinates</em> &mdash; a basis, a covariance ellipse, and a
+  density of the data on \(\mathrm{Gr}(2,n)\times\mathcal{S}^2_{++}\).</p>
+  <p class="sst-note">This learned, data-driven domain is the geometry the airfoil spoke turns into a design tool,
+  and the metric the chip and grain decisions measure distances in.</p>
+</div>

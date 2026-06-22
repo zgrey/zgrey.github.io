@@ -1,0 +1,25 @@
+---
+id: ebsd-landscape
+seq: 19
+act: EBSD Grains
+title: The Decision Landscape
+mount: widget:decision-landscape
+choices:
+  - label: "Wrap up this spoke →"
+    target: ebsd-outlook
+  - label: "↩ back to the product test"
+    target: ebsd-product
+---
+<p class="sst-lead">A decision is only as good as its stability. Sweep the effect size and watch the calibrated
+test's <strong>rejection rate</strong> &mdash; and its ambiguity.</p>
+
+<p>\[ \text{ambiguity} = 4\,\mathbb{P}_n(H=1)\big(1-\mathbb{P}_n(H=1)\big),\qquad H\in\{0,1\}. \]</p>
+
+<div class="sst-frag">
+  <p>At \(\delta=0\) the rejection rate sits at the test size \(\alpha\) (correctly calibrated). As the effect grows
+  it climbs to 1. In between is the <strong>ambiguous band</strong> where \(4p(1-p)\to1\) and the verdict is a
+  coin flip.</p>
+  <p class="sst-note">A nuisance parameter &mdash; segmentation smoothing, regularization dimension \(r\) &mdash; slides
+  you along \(\delta\). The "Goldilocks" failure is landing in that band: too little or too much smoothing and the
+  decision stops being trustworthy. Honest reporting means showing where you sit on this curve.</p>
+</div>

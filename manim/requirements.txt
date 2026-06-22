@@ -1,0 +1,9 @@
+# Manim Community Edition — math animation set-pieces for the SST Adventure.
+# Install into an isolated venv (NOT the site's npm toolchain):
+#   python -m venv .venv && source .venv/Scripts/activate   # Git Bash on Windows
+#   pip install -r manim/requirements.txt
+#
+# Manim also needs a system ffmpeg on PATH (and, for TeX labels, a LaTeX install).
+# Manim CE 0.19+ is required on Python 3.13 (0.18.x caps at <3.13).
+manim>=0.19,<0.21
+numpy>=1.24

@@ -1,0 +1,28 @@
+---
+id: srqd
+seq: 10
+spine: 10
+act: Shape Analysis
+title: SRQD &mdash; Separate Undulation from Scale
+mount: widget:svd-polar
+choices:
+  - label: "Does it actually converge? →"
+    target: spectral-convergence
+  - label: "↩ back to quadrature"
+    target: quadrature
+---
+<p class="sst-lead">A thin SVD of the weighted, centered landmark matrix gives a <strong>polar decomposition</strong>
+&mdash; the heart of the Separable Representation by Quadrature Decomposition (SRQD).</p>
+
+<p>\[ \sqrt{W}\,\mathcal{T}[\bm{c}](\{s_i\}) = \widetilde{X}\,P,\qquad
+\widetilde{X}=U V^{\top},\quad P = V\Sigma V^{\top}\in \mathcal{S}^2_{++}. \]</p>
+
+<div class="sst-frag">
+  <p>The two factors are the whole point:</p>
+  <ul>
+    <li>\([\widetilde{X}]\in \mathrm{Gr}(2,n)\) is <strong>undulation</strong> &mdash; shape with scale removed,</li>
+    <li>\(P\in\mathcal{S}^2_{++}\) is generalized <strong>scale</strong> &mdash; anisotropic, rotation-free.</li>
+  </ul>
+  <p class="sst-note">Drag the landmarks. The ellipse is \(P\) (scale); the right panel is the standardized
+  undulation \(\widetilde{X}=XP^{-1}\). Stretching the shape moves \(P\) but barely touches \([\widetilde{X}]\).</p>
+</div>

@@ -1,0 +1,34 @@
+---
+id: chips-mmd
+seq: 14
+act: Chips & Defects
+title: The Explainable Decision (MMD)
+mount: widget:mmd-witness
+choices:
+  - label: "Turn a verdict into a label →"
+    target: chips-artifacts
+  - label: "↩ back to the problem"
+    target: chips-problem
+---
+<p class="sst-lead">Each measurement gives a <em>distribution</em> of separable features &mdash; undulations
+\(\bm{t}\) and scales \(\bm{\ell}\). We compare two distributions with the <strong>Maximum Mean
+Discrepancy</strong>.</p>
+
+<p>\[ \mathrm{MMD}[\mathcal{F},\hat{\rho},\check{\rho}] = \sup_{f\in\mathcal{F}}\big|\,\mathbb{E}_{\hat{\bm{\theta}}\sim\hat{\rho}}[f(\hat{\bm{\theta}})] - \mathbb{E}_{\check{\bm{\theta}}\sim\check{\rho}}[f(\check{\bm{\theta}})]\,\big|. \]</p>
+
+<div class="sst-frag">
+  <p>The maximizing \(f\) is the <strong>witness function</strong> \(f^*\) &mdash; it doesn't just say
+  <em>whether</em> two shapes differ, it shows <em>where</em> in feature space they differ.</p>
+  <p class="sst-note">Slide the clouds apart: at coincidence the finite-sample MMD is small <em>but not zero</em>,
+  so the verdict is set by a <strong>permutation null</strong>, not a fixed cutoff &mdash; we reject only when the
+  observed MMD beats the null at \(\alpha=0.05\).</p>
+</div>
+
+<div class="sst-frag">
+  <p>Run it on undulation \(\bm{t}\) and on scale \(\bm{\ell}\) separately, and the product test
+  \(\mathrm{pMMD}[\mathcal{H}\otimes\mathcal{Q}]\) yields a <em>logical</em> verdict: same, or different because of
+  scale, or different because of undulation.</p>
+  <p class="sst-note">Honesty check: the decision is only as trustworthy as its calibration. The threshold must
+  come from the permutation null (it controls false rejections exactly, in any dimension), and power still depends
+  on kernel bandwidth and on having enough shapes relative to the feature dimension \(r\).</p>
+</div>

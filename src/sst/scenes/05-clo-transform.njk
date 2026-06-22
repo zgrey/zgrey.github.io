@@ -1,0 +1,33 @@
+---
+id: clo-transform
+seq: 5
+spine: 5
+act: Shape Analysis
+title: The Composite Linear Operator
+mount: widget:op-transform
+choices:
+  - label: "Prove it's invariant (interactive) →"
+    target: prrti-invariance
+  - label: "↩ back to boundary curves"
+    target: boundary-curves
+---
+<p class="sst-lead">Center the curve by subtracting its arc-length mean,</p>
+<p>\[ \mathcal{T}[\bm{c}](s)=\bm{c}(s)-\int_{\mathcal{I}}\bm{c}(u)\,d\mu(u). \]</p>
+
+<div class="sst-frag">
+  <p>Then form the <strong>composite linear operator</strong> (CLO) &mdash; every pairwise inner product of
+  centered landmarks,</p>
+  <p>\[ k_{\mathcal{T}}[\bm{c}](s,u)=\mathcal{T}[\bm{c}](s)\cdot\mathcal{T}[\bm{c}](u). \]</p>
+</div>
+
+<div class="sst-frag">
+  <p>Because it is built from dot products of <em>centered</em> coordinates, the CLO encodes all pairwise
+  <strong>angles and relative lengths</strong> &mdash; the rigid-invariant content of the shape &mdash; while
+  discarding absolute position and orientation.</p>
+</div>
+
+<div class="sst-frag">
+  <p class="sst-claim">Claim: \(k_{\mathcal{T}}\) is invariant to <strong>p</strong>ermutation,
+  <strong>r</strong>otation, <strong>r</strong>eflection, and <strong>t</strong>ranslation &mdash;
+  it is <strong>PRRTI</strong>. Let's see it.</p>
+</div>

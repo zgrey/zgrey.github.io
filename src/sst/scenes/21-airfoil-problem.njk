@@ -1,0 +1,23 @@
+---
+id: airfoil-problem
+seq: 21
+act: Airfoils / G2Aero
+title: Many Parameters, Few Directions
+mount: none
+choices:
+  - label: "Show me the ridge →"
+    target: airfoil-ridge
+  - label: "↩ back to the hub"
+    target: hub
+---
+<p class="sst-lead">An aerodynamic model depends on many shape parameters \(x\in\mathbb{R}^m\), yet the quantity of
+interest often varies along only a <strong>handful of directions</strong>.</p>
+
+<p>\[ C = \int_{\mathcal{X}} \nabla f(x)\,\nabla f(x)^{\top} \rho(x)\,dx = W\Lambda W^{\top}. \]</p>
+
+<div class="sst-frag">
+  <p>The dominant eigenvectors span an <strong>active subspace</strong>: \(f(x)\approx g(W_r^{\top}x)\), a
+  <em>ridge function</em> &mdash; flat across the inactive directions.</p>
+  <p class="sst-note">This is the linear precursor. It has a catch: the active subspace depends on how you
+  <em>parametrized</em> the shape &mdash; which is what pushes us toward an intrinsic, geometric description.</p>
+</div>

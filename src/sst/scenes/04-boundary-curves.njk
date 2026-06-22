@@ -1,0 +1,29 @@
+---
+id: boundary-curves
+seq: 4
+spine: 4
+act: Shape Analysis
+title: Boundary Curves
+mount: none
+choices:
+  - label: "How do we make a shape rigid-invariant? →"
+    target: clo-transform
+  - label: "↩ what counts as a shape?"
+    target: what-is-shape
+---
+<p class="sst-lead">A shape begins as a <em>boundary curve</em> &mdash; a Lipschitz immersion that traces an
+object's outline in the plane.</p>
+
+<p>\[ \bm{c}:\mathcal{I}\subset\mathbb{R}\to\mathbb{R}^{d}:s\mapsto\big(c_1(s),\dots,c_d(s)\big)^{\top} \]</p>
+
+<div class="sst-frag">
+  <p>Sampling the curve at landmarks \(s_1,\dots,s_n\) gives a <strong>discrete shape</strong>, a centered
+  landmark matrix</p>
+  <p>\[ X=(\bm{x}_1,\dots,\bm{x}_n)^{\top}\in\mathbb{R}^{n\times 2}_{*},\qquad \bm{x}_i=\bm{c}(s_i). \]</p>
+</div>
+
+<div class="sst-frag">
+  <p>Two images of the <em>same</em> shape can differ by a rigid motion &mdash; rotation, reflection,
+  translation &mdash; and by how we <em>index</em> the landmarks. The whole game is to measure shape
+  <strong>up to</strong> those nuisances.</p>
+</div>

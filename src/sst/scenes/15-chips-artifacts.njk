@@ -1,0 +1,31 @@
+---
+id: chips-artifacts
+seq: 15
+act: Chips & Defects
+title: Artifacts vs. Defects
+mount: none
+choices:
+  - label: "What's still open? →"
+    target: chips-outlook
+  - label: "↩ back to the MMD decision"
+    target: chips-mmd
+---
+<p class="sst-lead">Three sources of boundaries &mdash; <strong>CAD</strong> (design), <strong>sim</strong> (modeled xCT),
+and <strong>meas</strong> (real xCT) &mdash; and three MMD comparisons isolate <em>what kind</em> of discrepancy
+we witnessed.</p>
+
+<div class="sst-frag">
+  <p>\[ \text{CAD vs. sim} \;\Rightarrow\; A := \{\text{Artifacts}\} \sim \rho_A \]</p>
+  <p class="sst-note">Design vs. a perfect simulated scan: any difference is an <em>imaging artifact</em>, not a real flaw.</p>
+</div>
+
+<div class="sst-frag">
+  <p>\[ \text{CAD vs. meas} \;\Rightarrow\; AD := \{\text{Artifacts},\,\text{Defects}\} \sim \rho_{AD} \]</p>
+  <p class="sst-note">Design vs. the real scan: differences mix imaging artifacts <em>and</em> genuine defects.</p>
+</div>
+
+<div class="sst-frag">
+  <p>\[ \text{sim vs. meas} \;\Rightarrow\; D := \{\text{Defects}\} \sim \rho_D \]</p>
+  <p class="sst-claim">Subtracting the artifact channel from the combined one isolates the <strong>defects</strong>
+  &mdash; the discrepancies that actually matter.</p>
+</div>

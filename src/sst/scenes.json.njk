@@ -1,0 +1,20 @@
+---
+permalink: /sst/scenes.json
+eleventyExcludeFromCollections: true
+---
+{
+  "scenes": [
+  {%- for s in collections.sstScene -%}
+    {
+      "id": {{ s.data.id | dump | safe }},
+      "seq": {{ (s.data.seq or 0) | dump | safe }},
+      "spine": {{ (s.data.spine or null) | dump | safe }},
+      "act": {{ (s.data.act or "") | dump | safe }},
+      "title": {{ s.data.title | dump | safe }},
+      "mount": {{ (s.data.mount or "none") | dump | safe }},
+      "choices": {{ (s.data.choices or []) | dump | safe }},
+      "html": {{ s.templateContent | dump | safe }}
+    }{% if not loop.last %},{% endif %}
+  {%- endfor -%}
+  ]
+}

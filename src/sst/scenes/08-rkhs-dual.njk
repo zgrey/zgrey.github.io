@@ -1,0 +1,27 @@
+---
+id: rkhs-dual
+seq: 8
+spine: 8
+act: Shape Analysis
+title: Dual Forms (RKHS)
+mount: none
+choices:
+  - label: "How do we actually compute it? →"
+    target: quadrature
+  - label: "↩ back to the eigenproblem"
+    target: curve-eigenproblem
+---
+<p class="sst-lead">The eigenfunctions have a clean meaning: they are orthonormal <strong>dual evaluation
+functionals</strong> of the curve in a reproducing-kernel Hilbert space.</p>
+
+<div class="sst-frag">
+  <p>\[ \widetilde{v}_j(s) = \frac{1}{\sigma_j}\,\bm{\alpha}_j\cdot\mathcal{T}[\bm{c}](s),\qquad
+  \bm{\alpha}_j\in\mathbb{R}^d. \]</p>
+</div>
+
+<div class="sst-frag">
+  <p>So the integral eigenproblem collapses to a tiny \(d\times d\) eigenproblem on the centered second moment,</p>
+  <p>\[ \big(\langle \mathcal{T}[\bm{c}]\otimes\mathcal{T}[\bm{c}]\rangle_{\mathcal{H}^*_d} - \sigma_j^2\,\mathbb{I}_d\big)\bm{\alpha}_j = \bm{0}. \]</p>
+  <p class="sst-note">For planar shapes \(d=2\): the whole transform is a 2&times;2 eigenproblem &mdash; which is exactly
+  why the widgets here run live in your browser.</p>
+</div>
