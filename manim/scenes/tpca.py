@@ -117,9 +117,6 @@ class TangentPCA(ThreeDScene):
     def construct(self):
         phi0, theta0 = 58 * DEGREES, -56 * DEGREES
         self.set_camera_orientation(phi=phi0, theta=theta0)
-        # unit vector from origin toward the camera (the near side of the sphere)
-        cam_dir = np.array([np.sin(phi0) * np.cos(theta0),
-                            np.sin(phi0) * np.sin(theta0), np.cos(phi0)])
         axes = ThreeDAxes(x_range=[-3, 3], y_range=[-3, 3], z_range=[-3, 3])
         sphere = Sphere(radius=R, resolution=(28, 28)).set_opacity(0.10).set_color(BLUE_E)
         self.play(Create(axes), Create(sphere), run_time=1.2)
@@ -128,23 +125,27 @@ class TangentPCA(ThreeDScene):
         self.add_fixed_in_frame_mobjects(cap)
         self.caption = cap
 
-        # ---- 1. Exp / Log demo: a long geodesic across the near face ----
-        # Base point faces the camera; sweep "up" so the whole arc stays on the
-        # near side of the sphere (~80 deg of arc, much longer than a small step).
-        pe = R * cam_dir
-        pen = pe / R
-        e_up = unit(np.array([0.0, 0.0, 1.0]) - np.dot(np.array([0.0, 0.0, 1.0]), pen) * pen)
-        arc = 1.4                                   # geodesic arc-angle (rad) ~ 80 deg
-        ve = R * arc * e_up                         # tangent magnitude = arc length
-        qe = exp_map(pe, ve)
+        # ---- 1. Exp / Log demo: a curved geodesic, equator -> north pole ----
+        # Start near the equator and sweep toward the north pole, AZIMUTHALLY
+        # OFFSET so the great circle projects as a visibly CURVED path. (A path
+        # aimed straight at the observer would project to a straight line and
+        # hide the map's nonlinearity.) The straight green tangent arrow vs. the
+        # curving orange geodesic makes that nonlinearity explicit. Endpoints
+        # chosen offline to maximize on-screen curvature while keeping the whole
+        # arc on the near side (camera at phi=58, theta=-56).
+        S = unit(np.array([-0.669, -0.743, 0.0]))    # on the equator, near side
+        Q = unit(np.array([0.236, 0.282, 0.93]))     # near the north pole
+        pe = R * S
+        ve = log_map(pe, R * Q)                      # tangent; |ve| = arc length
+        qe = R * Q
         pdot = Dot3D(pe, color=YELLOW, radius=0.08)
-        # tangent arrow drawn at a fixed display length (direction indicator)
-        tan = Arrow3D(pe, pe + 1.2 * e_up, color=GREEN)
+        # tangent arrow at a fixed display length (initial-velocity direction)
+        tan = Arrow3D(pe, pe + 1.2 * unit(ve), color=GREEN)
         geo = ParametricFunction(lambda a: exp_map(pe, a * ve), t_range=[0, 1], color=ORANGE)
         qdot = Dot3D(qe, color=RED, radius=0.08)
         self.play(FadeIn(pdot))
         self.play(Create(tan))
-        self.play(Create(geo), FadeIn(qdot), run_time=1.8)
+        self.play(Create(geo), FadeIn(qdot), run_time=2.0)
         self.wait(0.6)
         self.play(FadeOut(VGroup(pdot, tan, geo, qdot)))
 
