@@ -17,6 +17,13 @@
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
-    "html-validate": "^8.0.0"
+    "html-validate": "^8.0.0",
+    "js-yaml": "^4.2.0"
+  },
+  "comments": {
+    "overrides": "Force js-yaml >=4.2.0 to patch CVE-2026-53550 (GHSA-h67p-54hq-rp68). gray-matter@4.0.3 pins js-yaml ^3.13.1; we override it AND set a js-yaml 4.x front-matter engine in eleventy.config.js (gray-matter's default calls the removed safeLoad)."
+  },
+  "overrides": {
+    "js-yaml": "^4.2.0"
   }
 }
