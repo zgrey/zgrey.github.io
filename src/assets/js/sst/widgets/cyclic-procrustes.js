@@ -128,7 +128,7 @@ export default function mount (root) {
   const GREEN = () => css('--color-accent-primary') || '#537949';
   const APPLE_C = '#c9603f';
 
-  const S = 78, CX = 150, CY = 130;
+  const S = 58, CX = 150, CY = 130;   // fits the apple (max radius 1.735) under rotation
   const toPx = p => [CX + p[0] * S, CY - p[1] * S];
   const strokeShape = (ctx, pts, color, w) => {
     ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath();
