@@ -843,6 +843,7 @@ a:hover, a:focus {
   border: 1px solid var(--color-border);
   border-radius: 6px;
   max-width: 100%;
+  height: auto;          /* scale proportionally on narrow widths (no squish/clip) */
   touch-action: none;
 }
 .sst-iv-side { flex: 1; min-width: 12rem; }

@@ -145,17 +145,21 @@ export default function mount (root) {
       : X.map(p => [...p]);
 
     rc.clearRect(0, 0, 300, 260);
-    rc.strokeStyle = css('--color-text-secondary') || '#999'; rc.globalAlpha = 0.4; rc.lineWidth = 1;
+    // faint correspondence lines (tangled when unregistered, ~0 when aligned)
+    rc.strokeStyle = css('--color-text-secondary') || '#999'; rc.globalAlpha = 0.28; rc.lineWidth = 1;
     for (let i = 0; i < N; i++) {
       const a = toPx(Xdisp[i]), b = toPx(Yref[i]);
       rc.beginPath(); rc.moveTo(a[0], a[1]); rc.lineTo(b[0], b[1]); rc.stroke();
     }
     rc.globalAlpha = 1;
-    strokeShape(rc, Yref, APPLE_C, 2);
+    // Y reference: a sequence of OPEN circles, so the X line threading through
+    // them reveals the machine-precision overlap (and where undulation deviates)
+    rc.strokeStyle = APPLE_C; rc.lineWidth = 1.4;
+    Yref.forEach((p, i) => { const q = toPx(p); rc.beginPath(); rc.arc(q[0], q[1], i === 0 ? 4.5 : 3.2, 0, Math.PI * 2); rc.stroke(); });
+    // X query: a connected line
     strokeShape(rc, Xdisp, GREEN(), 2);
-    // mark landmark 0 on each so the permutation is visible
-    const m0 = (pt, col) => { const q = toPx(pt); rc.fillStyle = col; rc.beginPath(); rc.arc(q[0], q[1], 4, 0, 7); rc.fill(); };
-    m0(Yref[0], APPLE_C); m0(Xdisp[0], GREEN());
+    // landmark-0 marker on X (shows the permutation phase)
+    const q0 = toPx(Xdisp[0]); rc.fillStyle = GREEN(); rc.beginPath(); rc.arc(q0[0], q0[1], 3.5, 0, Math.PI * 2); rc.fill();
 
     // objective plot (y zoomed so the peak reads)
     const fs = sol.fs, fmin = Math.min(...fs), fmax = Math.max(...fs);
