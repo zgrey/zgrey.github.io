@@ -1,0 +1,26 @@
+---
+id: cyclic-procrustes
+seq: 6.5
+spine: 6.5
+act: Shape Analysis
+title: Cyclic Procrustes &mdash; Fixing the Phase Shift
+mount: widget:cyclic-procrustes
+choices:
+  - label: "Now the eigenproblem behind it all →"
+    target: curve-eigenproblem
+  - label: "↩ back to PRRTI"
+    target: prrti-invariance
+---
+<p class="sst-lead">The leftover freedom from the last scene &mdash; the <strong>cyclic reparametrization</strong> (where
+the landmark indexing starts) &mdash; is resolved by <strong>cyclic Procrustes</strong> registration.</p>
+
+<p>\[ \min_{p\in\mathcal{N},\,R\in O(d)} \big\| C(p)X - YR \big\|_F
+\iff p_* = \operatorname*{argmax}_{p} \big\| Y^{\top} C(p) X \big\|_{*},\quad R_* = U V^{\top}. \]</p>
+
+<div class="sst-frag">
+  <p>Here the apple is registered against a phase-shifted, rotated copy of itself. The naive
+  index-to-index pairing is tangled; cyclic Procrustes finds the cyclic offset \(p_*\) (the peak of
+  \(\|Y^{\top}C(p)X\|_*\)) and the rotation \(R_*\), and the shapes snap together.</p>
+  <p class="sst-note">Drag a landmark to add real undulation: registration still removes the phase and rotation,
+  and the <em>residual</em> that remains is the genuine shape difference &mdash; exactly the separation SST is after.</p>
+</div>
