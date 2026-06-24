@@ -9,3 +9,6 @@ _site/
 manim/.media/
 __pycache__/
 *.pyc
+
+# data-extraction preview artifacts
+scripts/*.png

@@ -9,8 +9,14 @@
  * landmark changes the undulation; stretching the whole shape moves P but leaves
  * the undulation subspace [X~] essentially fixed.
  *
+ * The example shape is a real segmented boundary, apple-1 from the MPEG-7
+ * dataset (its scale P is only mildly anisotropic — an apple is mostly
+ * undulation; the stretch buttons add linear scale on top).
+ *
  * Contract: default export mount(rootEl) -> { destroy() }.
  */
+
+import { APPLE } from './_apple.js';
 
 // eigendecomposition of a 2x2 symmetric matrix [[a,b],[b,c]] -> {vals:[l1>=l2], vecs:[[..],[..]]}
 function eig2 (a, b, c) {
@@ -28,13 +34,8 @@ function eig2 (a, b, c) {
 }
 
 export default function mount (root) {
-  const N = 16;
-  const base = [];
-  for (let i = 0; i < N; i++) {
-    const a = (i / N) * Math.PI * 2;
-    const r = 1 + 0.25 * Math.sin(3 * a);
-    base.push({ x: 1.4 * r * Math.cos(a), y: 0.85 * r * Math.sin(a) }); // mildly anisotropic
-  }
+  const SHAPE_SCALE = 1.2;   // RMS-normalized apple -> match the canvas layout
+  const base = APPLE.map(([x, y]) => ({ x: x * SHAPE_SCALE, y: y * SHAPE_SCALE }));
   let pts = base.map(p => ({ ...p }));
 
   root.innerHTML = `

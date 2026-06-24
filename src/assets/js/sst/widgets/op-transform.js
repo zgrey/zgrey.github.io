@@ -6,10 +6,13 @@
  * formula lights up; applying P⁻¹ (standardization) morphs the anisotropic
  * scale away to the standardized undulation X̃ while its formula lights up.
  * The point: each math operation is something you *do* to the curve, shown on
- * both the algebra and the picture at once.
+ * both the algebra and the picture at once. The undulation X̃ is a real
+ * segmented boundary, apple-1 from the MPEG-7 dataset.
  *
  * Contract: default export mount(rootEl) -> { destroy() }.
  */
+
+import { APPLE } from './_apple.js';
 
 function renderMath (el) {
   if (typeof window.renderMathInElement === 'function') {
@@ -26,14 +29,9 @@ function renderMath (el) {
 const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function mount (root) {
-  // centered undulation landmarks (the X̃ the pipeline ends on)
-  const N = 22;
-  const base = [];
-  for (let i = 0; i < N; i++) {
-    const a = (i / N) * Math.PI * 2;
-    const r = 1 + 0.22 * Math.sin(3 * a) + 0.1 * Math.cos(5 * a);
-    base.push({ x: r * Math.cos(a), y: r * Math.sin(a) });
-  }
+  // centered undulation landmarks (the X̃ the pipeline ends on): apple-1 boundary
+  const SHAPE_SCALE = 0.85;   // RMS-normalized apple -> fits after P0 + T0
+  const base = APPLE.map(([x, y]) => ({ x: x * SHAPE_SCALE, y: y * SHAPE_SCALE }));
   const P0 = [[1.35, 0.28], [0.28, 0.8]]; // SPD scale applied to the raw curve
   const T0 = [0.95, 0.6];                 // raw off-centre offset
   const I = [[1, 0], [0, 1]];

@@ -11,11 +11,14 @@
  *     the reparametrization freedom that cyclic Procrustes resolves downstream;
  *   - drag a landmark                → genuine undulation: σ and ṽⱼ change.
  *
- * The shape is deliberately anisotropic (σ₁/σ₂ well above 1) so P is
- * non-degenerate and the decomposition is unique — no near-circular ambiguity.
+ * The example shape is a real segmented boundary — apple-1 from the MPEG-7
+ * dataset (σ₁/σ₂ ≈ 1.20, non-degenerate; eigenfunction invariance verified to
+ * machine precision).
  *
  * Contract: default export mount(rootEl) -> { destroy() }.
  */
+
+import { APPLE } from './_apple.js';
 
 // eigendecomposition of 2x2 symmetric [[a,b],[b,c]] -> {vals:[l1>=l2], v1, v2}
 function eig2 (a, b, c) {
@@ -41,13 +44,9 @@ function fixFnSign (v) {
 }
 
 export default function mount (root) {
-  const N = 20;
-  const base = [];
-  for (let i = 0; i < N; i++) {
-    const a = (i / N) * Math.PI * 2;
-    const r = 1 + 0.16 * Math.sin(3 * a) + 0.08 * Math.cos(5 * a);
-    base.push({ x: 1.7 * r * Math.cos(a), y: 0.95 * r * Math.sin(a) }); // anisotropic
-  }
+  const SHAPE_SCALE = 1.45;   // RMS-normalized apple -> match the canvas layout
+  const base = APPLE.map(([x, y]) => ({ x: x * SHAPE_SCALE, y: y * SHAPE_SCALE }));
+  const N = base.length;
 
   let pts = base.map(p => ({ ...p }));
   let theta = 0;          // rotation
