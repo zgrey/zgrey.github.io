@@ -22,10 +22,10 @@ Render (website repo root, venv active):
 import numpy as np
 from manim import (
     ThreeDScene, Sphere, ThreeDAxes, Dot3D, Arrow3D, Line3D, Circle, Square,
-    ParametricFunction, TracedPath, VGroup, Text, MathTex,
+    Surface, ParametricFunction, TracedPath, VGroup, Text, MathTex,
     Create, FadeIn, FadeOut, GrowFromCenter, ReplacementTransform,
     MoveAlongPath, interpolate_color,
-    BLUE_E, BLUE_D, YELLOW, GREEN, GREEN_B, ORANGE, RED, WHITE, GREY_B,
+    BLUE_E, BLUE_D, TEAL, YELLOW, GREEN, GREEN_B, ORANGE, RED, WHITE, GREY_B,
     DEGREES, UL,
 )
 
@@ -118,7 +118,7 @@ class TangentPCA(ThreeDScene):
         phi0, theta0 = 58 * DEGREES, -56 * DEGREES
         self.set_camera_orientation(phi=phi0, theta=theta0)
         axes = ThreeDAxes(x_range=[-3, 3], y_range=[-3, 3], z_range=[-3, 3])
-        sphere = Sphere(radius=R, resolution=(28, 28)).set_opacity(0.10).set_color(BLUE_E)
+        sphere = Sphere(radius=R, resolution=(28, 28)).set_opacity(0.28).set_color(BLUE_E)
         self.play(Create(axes), Create(sphere), run_time=1.2)
 
         cap = Text("Exp / Log maps", font_size=26, color=BLUE_D).to_corner(UL)
@@ -240,12 +240,28 @@ class TangentPCA(ThreeDScene):
         self.play(Create(ellipse))
         self.wait(0.4)
 
-        # ---- 10. morph ellipse -> 2D KDE of the Log points ----
+        # ---- 10. morph ellipse -> flat 2D KDE heatmap on the tangent plane ----
         self._swap_cap("kernel density estimate on the tangent space", GREEN_B)
         kde = self._build_kde(p_star, e1, e2, coords, rmax, pn)
         self.play(ReplacementTransform(ellipse, kde),
-                  FadeOut(basis_arrows), FadeOut(disk), run_time=1.6)
-        self.wait(1.5)
+                  FadeOut(basis_arrows), run_time=1.4)
+        self.wait(0.5)
+
+        # ---- 11. lift the grid into a surface-contour plot (height = density) ----
+        self._swap_cap("density as a surface over the tangent space", GREEN_B)
+        surf = self._kde_surface(p_star, e1, e2, coords, rmax, pn, axes)
+        self.play(ReplacementTransform(kde, surf), run_time=1.8)
+        self.wait(0.4)
+
+        # ---- 12. zoom back to the opening iso-view and orbit the whole scene ----
+        # The KDE surface stays welded to the tangent plane at the Karcher mean as
+        # the sphere turns: density-on-the-manifold seen from the original angle.
+        self._swap_cap("tPCA density attached at the Karcher mean", GREEN_B)
+        self.move_camera(phi=phi0, theta=theta0, zoom=1.0, run_time=2.0)
+        self.begin_ambient_camera_rotation(rate=0.32)
+        self.wait(7.0)
+        self.stop_ambient_camera_rotation()
+        self.wait(0.5)
 
     # ---- helpers ----
     def _swap_cap(self, text, color):
@@ -284,3 +300,27 @@ class TangentPCA(ThreeDScene):
                 sq.shift(p0 + a * e1 + b * e2)
                 group.add(sq)
         return group
+
+    def _kde_surface(self, p0, e1, e2, coords, rmax, pn, axes):
+        """The same KDE, lifted off the tangent plane: z = density along the
+        outward normal pn, fill-colored by height -> a surface-contour plot that
+        stays attached at the Karcher mean."""
+        h = 0.40 * rmax
+
+        def dens(a, b):
+            d = 0.0
+            for (ca, cb) in coords:
+                d += np.exp(-((a - ca) ** 2 + (b - cb) ** 2) / (2 * h * h))
+            return d
+
+        gs = np.linspace(-rmax, rmax, 20)
+        dmax = max((dens(a, b) for a in gs for b in gs), default=1.0) or 1.0
+        hscale = 1.15 * rmax            # peak rises ~ tangent-disk radius
+        surf = Surface(
+            lambda u, v: p0 + u * e1 + v * e2 + hscale * (dens(u, v) / dmax) * pn,
+            u_range=[-rmax, rmax], v_range=[-rmax, rmax],
+            resolution=(26, 26),
+        )
+        surf.set_style(fill_opacity=0.9, stroke_width=0.4, stroke_color=GREY_B)
+        surf.set_fill_by_value(axes=axes, colorscale=[BLUE_E, TEAL, GREEN_B, YELLOW], axis=2)
+        return surf
