@@ -33,18 +33,26 @@ function eig2 (a, b, c) {
   return { vals: [l1, l2], v1, v2: [-v1[1], v1[0]] };
 }
 
-// Deterministic sign fixed on the eigenFUNCTION values (not the eigenvector):
-// make the largest-magnitude sample positive. The function values are rigid-
-// invariant, so this keeps ṽⱼ from flipping sign as the shape rotates, without
-// touching the genuine phase shift produced by a reparametrization (permute).
-function fixFnSign (v) {
-  let im = 0, am = 0;
-  for (let i = 0; i < v.length; i++) { if (Math.abs(v[i]) > am) { am = Math.abs(v[i]); im = i; } }
-  return v[im] < 0 ? v.map(x => -x) : v;
+// SIGN GAUGE (the "flipping" fix). An eigenvector — and hence the eigenfunction
+// ṽⱼ = (αⱼ·𝒯[c])/σⱼ — is only defined up to ±1; that sign is a free gauge, not a
+// property of the shape (it is the reflection freedom inside the polar
+// decomposition). The old convention "make the largest-|sample| positive" is
+// DISCONTINUOUS: the argmax index hops between near-tied samples as the shape
+// rotates or is dragged, snapping the whole curve over. We instead pin the sign
+// by CONTINUITY — align each frame's principal axis αⱼ to the previous frame's,
+// flipping only when they genuinely oppose. Rigid motion then leaves ṽⱼ rock
+// steady, while a reparametrization (permute) still shows its true phase shift.
+const dot2 = (a, b) => a[0] * b[0] + a[1] * b[1];
+function alignSign (a, prev, fallbackPositiveAxis) {
+  if (prev) return dot2(a, prev) < 0 ? [-a[0], -a[1]] : a;
+  // first frame: deterministic seed so the opening orientation is reproducible
+  return a[fallbackPositiveAxis] < 0 ? [-a[0], -a[1]] : a;
 }
 
 export default function mount (root) {
   const SHAPE_SCALE = 1.45;   // RMS-normalized apple -> match the canvas layout
+  const Z = 1.25;             // uniform widget zoom (backing store + drawing)
+  let prevA1 = null, prevA2 = null;   // previous principal axes, for sign continuity
   const base = APPLE.map(([x, y]) => ({ x: x * SHAPE_SCALE, y: y * SHAPE_SCALE }));
   const N = base.length;
 
@@ -57,9 +65,9 @@ export default function mount (root) {
   root.innerHTML = `
     <div class="sst-iv">
       <div class="sst-sp-panels">
-        <figure><canvas class="sst-iv-canvas" width="300" height="260" data-shape></canvas>
+        <figure><canvas class="sst-iv-canvas" width="375" height="325" data-shape></canvas>
           <figcaption>landmark curve + principal axes α</figcaption></figure>
-        <figure><canvas class="sst-iv-canvas" width="300" height="260" data-eig></canvas>
+        <figure><canvas class="sst-iv-canvas" width="375" height="325" data-eig></canvas>
           <figcaption>eigenfunctions ṽ₁(s), ṽ₂(s)</figcaption></figure>
       </div>
       <div class="sst-iv-side">
@@ -118,15 +126,20 @@ export default function mount (root) {
     const e = eig2(a, b, cc);
     const s1 = Math.sqrt(Math.max(1e-12, e.vals[0]));
     const s2 = Math.sqrt(Math.max(1e-12, e.vals[1]));
-    const v1 = fixFnSign(X.map(p => (p.x * e.v1[0] + p.y * e.v1[1]) / s1));
-    const v2 = fixFnSign(X.map(p => (p.x * e.v2[0] + p.y * e.v2[1]) / s2));
-    return { s1, s2, a1: e.v1, a2: e.v2, v1, v2, c };
+    // continuity-gauge the principal axes, then read the eigenfunctions off them
+    const a1 = alignSign(e.v1, prevA1, 0);
+    const a2 = alignSign(e.v2, prevA2, 1);
+    prevA1 = a1; prevA2 = a2;
+    const v1 = X.map(p => (p.x * a1[0] + p.y * a1[1]) / s1);
+    const v2 = X.map(p => (p.x * a2[0] + p.y * a2[1]) / s2);
+    return { s1, s2, a1, a2, v1, v2, c };
   }
 
   const SCALE = 52, CX = 150, CY = 130;
   const toPx = p => ({ x: CX + p.x * SCALE, y: CY - p.y * SCALE });
 
   function drawShape (disp, A) {
+    sx.setTransform(Z, 0, 0, Z, 0, 0);   // uniform zoom: user-space stays 300×260
     sx.clearRect(0, 0, 300, 260);
     sx.strokeStyle = css('--color-border') || '#333'; sx.lineWidth = 1;
     sx.beginPath(); sx.moveTo(0, CY); sx.lineTo(300, CY); sx.moveTo(CX, 0); sx.lineTo(CX, 260); sx.stroke();
@@ -161,6 +174,7 @@ export default function mount (root) {
   function drawEig (v1, v2) {
     const n = v1.length;
     const PX0 = 30, PX1 = 290, PY0 = 18, PY1 = 242, PMID = (PY0 + PY1) / 2;
+    ex.setTransform(Z, 0, 0, Z, 0, 0);   // uniform zoom: user-space stays 300×260
     ex.clearRect(0, 0, 300, 260);
     ex.strokeStyle = css('--color-border') || '#333'; ex.lineWidth = 1;
     ex.strokeRect(PX0, PY0, PX1 - PX0, PY1 - PY0);
@@ -221,8 +235,8 @@ export default function mount (root) {
   let dragging = -1;
   function modelIndexFromEvent (e) {
     const rect = shape.getBoundingClientRect();
-    const px = (e.clientX - rect.left) * (shape.width / rect.width);
-    const py = (e.clientY - rect.top) * (shape.height / rect.height);
+    const px = (e.clientX - rect.left) * (shape.width / rect.width) / Z;
+    const py = (e.clientY - rect.top) * (shape.height / rect.height) / Z;
     return { px, py };
   }
   function modelPointFromPx (px, py) {

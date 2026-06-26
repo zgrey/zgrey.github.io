@@ -12,6 +12,8 @@
 
 import { normals, decide } from './_mmd.js';
 
+const Z = 1.25;              // uniform widget zoom (backing store + drawing)
+
 export default function mount (root) {
   const N = 14, SIGMA = 0.6, H = 0.5;
   const ch = {
@@ -28,7 +30,7 @@ export default function mount (root) {
               <span class="sst-pm-name">${ch[key].name}</span>
               <span class="sst-pm-badge" data-badge="${key}">—</span>
             </div>
-            <canvas class="sst-iv-canvas" width="260" height="40" data-strip="${key}"></canvas>
+            <canvas class="sst-iv-canvas" width="325" height="50" data-strip="${key}"></canvas>
             <label class="sst-iv-range-row">sep
               <input type="range" class="sst-range" data-range="${key}" min="0" max="320" value="${Math.round(ch[key].sep * 100)}" step="1" aria-label="${ch[key].name} separation">
             </label>
@@ -53,6 +55,7 @@ export default function mount (root) {
     const g = c.getContext('2d');
     const W = 260, AX = 20, PAD = 12, T0 = -3.2, T1 = 3.2;
     const xp = t => PAD + (t - T0) / (T1 - T0) * (W - 2 * PAD);
+    g.setTransform(Z, 0, 0, Z, 0, 0);
     g.clearRect(0, 0, W, 40);
     g.strokeStyle = css('--color-border') || '#333'; g.lineWidth = 1;
     g.beginPath(); g.moveTo(PAD, AX); g.lineTo(W - PAD, AX); g.stroke();

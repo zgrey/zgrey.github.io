@@ -232,6 +232,16 @@ function renderMap (mapEl, manifest) {
 
 // ---- Boot -----------------------------------------------------------------
 
+// The Hub graph also fronts the standalone map page (no player there): mount it
+// directly into #sst-hub-graph if present.
+function mountHubGraph (hostId) {
+  const host = document.getElementById(hostId);
+  if (!host || host._sstGraph) return;
+  import('./widgets/hub-graph.js')
+    .then(mod => { if (document.body.contains(host)) host._sstGraph = (mod.default || mod.mount)(host); })
+    .catch(err => console.error('SST hub graph failed', err));
+}
+
 function init () {
   const app = document.getElementById('sst-app');
   const mapEl = document.getElementById('sst-map');
@@ -242,6 +252,7 @@ function init () {
   loadManifest().then(manifest => {
     if (app && document.body.contains(app)) app._sstPlayer = new Player(app, manifest);
     if (mapEl && document.body.contains(mapEl)) renderMap(mapEl, manifest);
+    mountHubGraph('sst-hub-graph');
   }).catch(err => console.error('SST manifest load failed', err));
 }
 

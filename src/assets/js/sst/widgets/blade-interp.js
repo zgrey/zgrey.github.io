@@ -12,6 +12,8 @@
 
 import { polar, grassGeo, spdGeo, frameR, rotAt, mul2 } from './_g2.js';
 
+const Z = 1.25;              // uniform widget zoom (backing store + drawing)
+
 // NACA 4-digit airfoil as a centred landmark matrix (consistent parametrization)
 function naca (m, p, t, n) {
   const xs = [];
@@ -51,8 +53,8 @@ export default function mount (root) {
   root.innerHTML = `
     <div class="sst-iv">
       <figure style="margin:0">
-        <canvas class="sst-iv-canvas" width="380" height="300"></canvas>
-        <figcaption style="font-size:0.72rem;color:var(--color-text-secondary);text-align:center;margin-top:0.3rem">
+        <canvas class="sst-iv-canvas" width="475" height="375"></canvas>
+        <figcaption style="font-size:0.82rem;color:var(--color-text-secondary);text-align:center;margin-top:0.35rem">
           cross-section at the build front (top) · blade by Riemannian interpolation (below)</figcaption>
       </figure>
       <div class="sst-iv-side">
@@ -96,6 +98,7 @@ export default function mount (root) {
   }
 
   function draw () {
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
     ctx.clearRect(0, 0, 380, 300);
     const front = p * (K - 1);
     drawAirfoilFlat(airfoilAt(front));

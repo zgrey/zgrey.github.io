@@ -20,6 +20,7 @@ import { NYSTROM } from './_nystrom_data.js';
 const NS = NYSTROM.N;
 const P1 = NYSTROM.p1, P2 = NYSTROM.p2;
 const OUTLINE = NYSTROM.appleOutline;
+const Z = 1.25;                 // uniform widget zoom (backing store + drawing)
 
 function cassiniPt (t) {
   const r = Math.sqrt(Math.max(0, P1 * Math.cos(2 * t) +
@@ -34,15 +35,15 @@ export default function mount (root) {
   root.innerHTML = `
     <div class="sst-iv">
       <div class="sst-sp-panels">
-        <figure style="margin:0"><canvas class="sst-iv-canvas" width="230" height="180" data-cassini></canvas>
+        <figure style="margin:0"><canvas class="sst-iv-canvas" width="288" height="225" data-cassini></canvas>
           <figcaption>Cassini oval · N nodes</figcaption></figure>
-        <figure style="margin:0"><canvas class="sst-iv-canvas" width="230" height="180" data-apple></canvas>
+        <figure style="margin:0"><canvas class="sst-iv-canvas" width="288" height="225" data-apple></canvas>
           <figcaption>apple-1 boundary · N nodes</figcaption></figure>
       </div>
       <div class="sst-sp-panels">
-        <figure style="margin:0"><canvas class="sst-iv-canvas" width="230" height="200" data-scale></canvas>
+        <figure style="margin:0"><canvas class="sst-iv-canvas" width="288" height="250" data-scale></canvas>
           <figcaption>scale error ‖P<sub>N</sub>−P<sub>ref</sub>‖ (log–log)</figcaption></figure>
-        <figure style="margin:0"><canvas class="sst-iv-canvas" width="230" height="200" data-efunc></canvas>
+        <figure style="margin:0"><canvas class="sst-iv-canvas" width="288" height="250" data-efunc></canvas>
           <figcaption>eigenfunction error max‖v<sub>N</sub>−v<sub>ref</sub>‖ (log–log)</figcaption></figure>
       </div>
       <div class="sst-iv-side">
@@ -84,6 +85,7 @@ export default function mount (root) {
   }
 
   function drawCurve (ctx, outlinePts, nodeAt, n, color, W, H) {
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
     ctx.clearRect(0, 0, W, H);
     const T = fit(outlinePts, W, H, 16);
     ctx.strokeStyle = GRID(); ctx.lineWidth = 1; ctx.beginPath();
@@ -104,6 +106,7 @@ export default function mount (root) {
     const xP = nn => X0 + (Math.log10(nn) - logNmin) / (logNmax - logNmin) * (X1 - X0);
     const yP = e => Y0 + (hiE - Math.log10(e)) / (hiE - loE) * (Y1 - Y0);
 
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
     ctx.clearRect(0, 0, W, H);
     ctx.font = '8px monospace'; ctx.textBaseline = 'middle';
     ctx.strokeStyle = GRID(); ctx.fillStyle = TXT();
@@ -119,6 +122,33 @@ export default function mount (root) {
     }
     ctx.textAlign = 'center'; ctx.fillText('N', (X0 + X1) / 2, H - 4);
     ctx.strokeStyle = TXT(); ctx.globalAlpha = 1; ctx.strokeRect(X0, Y0, X1 - X0, Y1 - Y0);
+
+    // REFERENCE RATE LINES — fanned from the apple's coarsest-N error. On log–log
+    // an algebraic rate e ∝ N^{-k} is a straight line of slope -k, so these make
+    // the measured order legible: the apple sits between N^-2 and N^-4 (algebraic,
+    // just slow) yet still beats Monte-Carlo's N^-1/2 — while Cassini's spectral
+    // plunge outruns every straight reference.
+    const n0 = NS[0], e0 = aVals[0] * 1.18;
+    const refs = [[0.5, 'N^-1/2 (MC)'], [2, 'N^-2'], [4, 'N^-4']];
+    ctx.save();
+    ctx.setLineDash([4, 3]); ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = TXT(); ctx.fillStyle = TXT(); ctx.font = '8px monospace';
+    for (const [k, lab] of refs) {
+      ctx.beginPath();
+      let started = false, lx = 0, ly = 0;
+      for (let j = 0; j < NS.length; j++) {
+        const ev = e0 * Math.pow(NS[j] / n0, -k);
+        const x = xP(NS[j]), y = yP(ev);
+        if (y < Y0 - 0.5 || y > Y1 + 0.5) { if (started) break; else continue; }
+        started ? ctx.lineTo(x, y) : ctx.moveTo(x, y); started = true; lx = x; ly = y;
+      }
+      ctx.stroke();
+      if (started) {
+        ctx.globalAlpha = 0.85; ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText(lab, Math.min(lx, X1) - 1, ly - 1); ctx.globalAlpha = 0.5;
+      }
+    }
+    ctx.restore();
 
     const series = (vals, color) => {
       ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();

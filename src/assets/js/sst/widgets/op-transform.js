@@ -27,6 +27,7 @@ function renderMath (el) {
 }
 
 const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const Z = 1.25;              // uniform widget zoom (backing store + drawing)
 
 export default function mount (root) {
   // centered undulation landmarks (the X̃ the pipeline ends on): apple-1 boundary
@@ -44,7 +45,7 @@ export default function mount (root) {
 
   root.innerHTML = `
     <div class="sst-op">
-      <canvas class="sst-iv-canvas" width="300" height="260"></canvas>
+      <canvas class="sst-iv-canvas" width="375" height="325"></canvas>
       <div class="sst-op-algebra">
         <div class="sst-op-line" data-line="0">\\( c(s) \\)</div>
         <div class="sst-op-line" data-line="1">\\( \\mathcal{T}[c](s) = c(s) - \\int_{\\mathcal{I}} c\\, d\\mu \\)</div>
@@ -71,6 +72,7 @@ export default function mount (root) {
   const toPx = p => ({ x: CX + p.x * SCALE, y: CY - p.y * SCALE });
 
   function draw () {
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
     ctx.clearRect(0, 0, 300, 260);
     // axes
     ctx.strokeStyle = css('--color-border') || '#333'; ctx.lineWidth = 1;

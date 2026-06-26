@@ -15,6 +15,8 @@
 
 import { normals, decide } from './_mmd.js';
 
+const Z = 1.25;              // uniform widget zoom (backing store + drawing)
+
 export default function mount (root) {
   const N = 12, SIGMA = 0.6, H = 0.5, M = 24, B = 120, G = 20, DMAX = 2.4;
 
@@ -36,8 +38,8 @@ export default function mount (root) {
   root.innerHTML = `
     <div class="sst-iv">
       <figure style="margin:0">
-        <canvas class="sst-iv-canvas" width="360" height="220" data-plot></canvas>
-        <figcaption style="font-size:0.72rem;color:var(--color-text-secondary);text-align:center;margin-top:0.3rem">
+        <canvas class="sst-iv-canvas" width="450" height="275" data-plot></canvas>
+        <figcaption style="font-size:0.82rem;color:var(--color-text-secondary);text-align:center;margin-top:0.35rem">
           P(reject) and ambiguity 4p(1−p) vs effect size δ</figcaption>
       </figure>
       <div class="sst-iv-side">
@@ -72,6 +74,7 @@ export default function mount (root) {
   }
 
   function draw () {
+    pc.setTransform(Z, 0, 0, Z, 0, 0);
     pc.clearRect(0, 0, 360, 220);
     // grid + axes
     pc.strokeStyle = css('--color-border') || '#333'; pc.lineWidth = 1;

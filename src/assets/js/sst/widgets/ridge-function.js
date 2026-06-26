@@ -16,6 +16,8 @@ function mulberry32 (seed) {
   return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
 
+const Z = 1.25;              // uniform widget zoom (backing store + drawing)
+
 export default function mount (root) {
   const PHI_W = 35 * Math.PI / 180;           // true active direction
   const w = [Math.cos(PHI_W), Math.sin(PHI_W)];
@@ -32,9 +34,9 @@ export default function mount (root) {
   root.innerHTML = `
     <div class="sst-iv">
       <div class="sst-sp-panels">
-        <figure><canvas class="sst-iv-canvas" width="220" height="220" data-field></canvas>
+        <figure><canvas class="sst-iv-canvas" width="275" height="275" data-field></canvas>
           <figcaption>f(x) over the design space + guess u</figcaption></figure>
-        <figure><canvas class="sst-iv-canvas" width="220" height="220" data-summary></canvas>
+        <figure><canvas class="sst-iv-canvas" width="275" height="275" data-summary></canvas>
           <figcaption>sufficient summary: f vs uᵀx</figcaption></figure>
       </div>
       <div class="sst-iv-side">
@@ -58,6 +60,7 @@ export default function mount (root) {
   const css = n => getComputedStyle(document.body).getPropertyValue(n).trim() || null;
 
   function drawField (u) {
+    fc.setTransform(Z, 0, 0, Z, 0, 0);
     fc.clearRect(0, 0, 220, 220);
     const G = 22, cell = 200 / G, o = 10;
     for (let i = 0; i < G; i++) {
@@ -77,6 +80,7 @@ export default function mount (root) {
   }
 
   function drawSummary (u) {
+    sc.setTransform(Z, 0, 0, Z, 0, 0);
     sc.clearRect(0, 0, 220, 220);
     sc.strokeStyle = css('--color-border') || '#333'; sc.lineWidth = 1; sc.strokeRect(16, 10, 196, 196);
     const projs = pts.map(pt => u[0] * pt.x[0] + u[1] * pt.x[1]);

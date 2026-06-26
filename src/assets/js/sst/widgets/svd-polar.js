@@ -33,6 +33,8 @@ function eig2 (a, b, c) {
   return { vals: [l1, l2], vecs: [v1, v2] };
 }
 
+const Z = 1.25;              // uniform widget zoom (backing store + drawing)
+
 export default function mount (root) {
   const SHAPE_SCALE = 1.2;   // RMS-normalized apple -> match the canvas layout
   const base = APPLE.map(([x, y]) => ({ x: x * SHAPE_SCALE, y: y * SHAPE_SCALE }));
@@ -41,9 +43,9 @@ export default function mount (root) {
   root.innerHTML = `
     <div class="sst-iv">
       <div class="sst-sp-panels">
-        <figure><canvas class="sst-iv-canvas" width="300" height="260" data-left></canvas>
+        <figure><canvas class="sst-iv-canvas" width="375" height="325" data-left></canvas>
           <figcaption>raw shape + P (scale)</figcaption></figure>
-        <figure><canvas class="sst-iv-canvas" width="300" height="260" data-right></canvas>
+        <figure><canvas class="sst-iv-canvas" width="375" height="325" data-right></canvas>
           <figcaption>standardized undulation X̃</figcaption></figure>
       </div>
       <div class="sst-iv-side">
@@ -111,7 +113,8 @@ export default function mount (root) {
     const { s1, s2, V, Xt } = decomp(X);
 
     // ----- left: raw shape (fixed scale) + P-ellipse -----
-    lx.clearRect(0, 0, left.width, left.height);
+    lx.setTransform(Z, 0, 0, Z, 0, 0);
+    lx.clearRect(0, 0, 300, 260);
     const LS = 70, LCX = 150, LCY = 130;
     const lpix = X.map(p => ({ x: LCX + p.x * LS, y: LCY - p.y * LS }));
     lx.strokeStyle = css('--color-accent-primary') || '#537949';
@@ -132,7 +135,8 @@ export default function mount (root) {
     lx.closePath(); lx.stroke(); lx.setLineDash([]);
 
     // ----- right: standardized undulation X~ (auto-fit) -----
-    rx.clearRect(0, 0, right.width, right.height);
+    rx.setTransform(Z, 0, 0, Z, 0, 0);
+    rx.clearRect(0, 0, 300, 260);
     let mr = 0;
     for (const p of Xt) mr = Math.max(mr, Math.hypot(p.x, p.y));
     const RS = mr ? 95 / mr : 1, RCX = 150, RCY = 130;
@@ -166,8 +170,8 @@ export default function mount (root) {
   let drag = -1;
   function leftModel (e) {
     const rect = left.getBoundingClientRect();
-    const px = (e.clientX - rect.left) * (left.width / rect.width);
-    const py = (e.clientY - rect.top) * (left.height / rect.height);
+    const px = (e.clientX - rect.left) * (left.width / rect.width) / Z;
+    const py = (e.clientY - rect.top) * (left.height / rect.height) / Z;
     return { x: (px - 150) / 70, y: (130 - py) / 70 };
   }
   function nearest (m) {

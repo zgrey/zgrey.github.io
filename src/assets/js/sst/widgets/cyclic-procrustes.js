@@ -1,16 +1,17 @@
 /**
  * Cyclic Procrustes demo — the fix for the phase-shift problem.
  *
- * Y is the FIXED reference apple. X is the manipulable copy: cyclically permute
+ * Y is the FIXED reference apple. X is the manipulable query: cyclically permute
  * its landmark indexing (phase slider), rotate it, and drag points. Naively
  * pairing landmark i <-> i is then wrong. Pressing "register" solves the cyclic
  * Procrustes problem in the paper's order: find the optimal permutation FIRST,
  *     p* = argmax_p || Y^T C(p) X ||_*   (nuclear norm over all cyclic shifts),
- * THEN the optimal rotation given p*,
+ * THEN the optimal rotation/reflection given p*,
  *     R* = U V^T   from  Y^T C(p*) X = U Σ V^T,
- * and overlays X onto Y. Any leftover residual is genuine undulation (drag a
- * point to see it). This is the reparametrization fix the eigenfunction phase
- * shift needed.
+ * and overlays X onto Y. Rather than SNAP, "register" ANIMATES the solution in
+ * the same order: (1) the optimal permutation re-threads the correspondence,
+ * then (2) the optimal rotation — and, when R* is a reflection, an explicit
+ * mirror flip — rolls X onto Y. Any leftover residual is genuine undulation.
  *
  * Contract: default export mount(rootEl) -> { destroy() }.
  */
@@ -20,6 +21,8 @@ import { APPLE } from './_apple.js';
 const N = APPLE.length;
 const SHAPE_SCALE = 1.45;
 const BASE = APPLE.map(([x, y]) => [x * SHAPE_SCALE, y * SHAPE_SCALE]);
+const Z = 1.25;                 // uniform widget zoom (backing store + drawing)
+const INIT_ROT = 50 * Math.PI / 180;   // start the query visibly rotated off Y
 
 function eig2 (a, b, c) {
   const tr = a + c;
@@ -38,6 +41,26 @@ const mul2 = (A, B) => [
 ];
 const apply2 = (R, p) => [R[0][0] * p[0] + R[0][1] * p[1], R[1][0] * p[0] + R[1][1] * p[1]];
 const rotM = th => [[Math.cos(th), -Math.sin(th)], [Math.sin(th), Math.cos(th)]];
+const FLIP = [[1, 0], [0, -1]];                       // reflection across the x-axis
+const ease = t => t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;   // easeInOutQuad
+
+// any R in O(2) is a rotation (det +1) or a rotation composed with a flip
+// (det -1). Return the rotation angle and whether a reflection is present.
+function decomposeO2 (R) {
+  const det = R[0][0] * R[1][1] - R[0][1] * R[1][0];
+  if (det > 0) return { reflect: false, theta: Math.atan2(R[1][0], R[0][0]) };
+  const M = mul2(R, FLIP);                            // R·FLIP is a pure rotation
+  return { reflect: true, theta: Math.atan2(M[1][0], M[0][0]) };
+}
+
+// linear interpolation along a closed polygon at a real index f
+function polyAt (P, f) {
+  const n = P.length;
+  const fi = ((f % n) + n) % n;
+  const i0 = Math.floor(fi), t = fi - i0;
+  const a = P[i0 % n], b = P[(i0 + 1) % n];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
 
 // 2x2 cross matrix M(p) = Y^T C(p) X,  (C(p)X)[i] = X[(i+p)%N]
 function crossM (Y, X, p) {
@@ -71,10 +94,14 @@ function procrustesR (M) {              // R = M (M^T M)^{-1/2} = U V^T
 }
 
 export default function mount (root) {
-  const Yref = BASE.map(p => [...p]);       // fixed reference
-  let Xman = BASE.map(p => [...p]);          // manipulable apple (rotate/drag)
-  let pShift = 18;                           // cyclic permutation (phase slider)
+  const Yref = BASE.map(p => [...p]);                          // fixed reference
+  let Xman = BASE.map(p => apply2(rotM(INIT_ROT), p));         // rotated query
+  let pShift = 18;                                             // cyclic permutation
   let registered = false;
+  let anim = null;                  // active register animation (null when idle)
+  let raf = 0;
+  const reduceMotion = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // current unregistered X: index i is landmark (i+pShift) of Xman
   const curX = () => Xman.map((_, i) => Xman[(i + pShift) % N]);
@@ -95,10 +122,10 @@ export default function mount (root) {
 
   root.innerHTML = `
     <div class="sst-iv">
-      <figure style="margin:0"><canvas class="sst-iv-canvas" width="300" height="260" data-reg></canvas>
+      <figure style="margin:0"><canvas class="sst-iv-canvas" width="375" height="325" data-reg></canvas>
         <figcaption><span style="color:#c9603f">Y</span> reference vs <span style="color:var(--color-accent-primary)">X</span> query · correspondence</figcaption></figure>
-      <figure style="margin:0"><canvas class="sst-iv-canvas" width="230" height="200" data-obj></canvas>
-        <figcaption>‖Y<sup>⊤</sup>C(p)X‖<sub>∗</sub> vs cyclic shift p · peak = p*</figcaption></figure>
+      <figure style="margin:0"><canvas class="sst-iv-canvas" width="375" height="325" data-obj></canvas>
+        <figcaption>permutation loss ‖Y<sup>⊤</sup>C(p)X‖<sub>∗</sub> · peak = p*</figcaption></figure>
       <div class="sst-iv-side">
         <div class="sst-iv-readout">
           <div><span class="sst-iv-k">found p*</span><span class="sst-iv-v" data-ps>—</span></div>
@@ -113,12 +140,14 @@ export default function mount (root) {
           <button type="button" data-act="reset">reset</button>
         </div>
         <p class="sst-iv-hint">Permute / rotate / drag the <strong style="color:var(--color-accent-primary)">X</strong>
-        apple &mdash; the correspondence tangles. <strong>Register</strong> finds the optimal permutation p*
-        (peak at right), then the rotation R*, and snaps X onto Y. Leftover residual is real undulation.</p>
+        apple &mdash; the correspondence tangles. <strong>Register</strong> animates the fix in order: first the
+        optimal permutation p* re-threads the pairing, then the rotation R* (with a mirror flip if it is a
+        reflection) rolls X onto Y. Leftover residual is real undulation.</p>
       </div>
     </div>`;
 
-  const rc = root.querySelector('[data-reg]').getContext('2d');
+  const regCanvas = root.querySelector('[data-reg]');
+  const rc = regCanvas.getContext('2d');
   const oc = root.querySelector('[data-obj]').getContext('2d');
   const psEl = root.querySelector('[data-ps]');
   const resEl = root.querySelector('[data-res]');
@@ -128,7 +157,7 @@ export default function mount (root) {
   const GREEN = () => css('--color-accent-primary') || '#537949';
   const APPLE_C = '#c9603f';
 
-  const S = 58, CX = 150, CY = 130;   // fits the apple (max radius 1.735) under rotation
+  const S = 58, CX = 150, CY = 130;   // user-space layout (fits the apple under rotation)
   const toPx = p => [CX + p[0] * S, CY - p[1] * S];
   const strokeShape = (ctx, pts, color, w) => {
     ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath();
@@ -136,70 +165,167 @@ export default function mount (root) {
     ctx.closePath(); ctx.stroke();
   };
 
-  function draw () {
-    const X = curX();
-    const sol = solve(X);
-    // registered: overlay X onto Y via (p*, R*); else show X in its own frame
-    const Xdisp = registered
-      ? X.map((_, i) => apply2(sol.R, X[(i + sol.pstar) % N]))
-      : X.map(p => [...p]);
+  // Resolve the on-screen geometry for the current state: the green X polyline,
+  // the X-endpoint of each correspondence line, the landmark-0 marker, and a
+  // moving cursor on the loss plot during the permutation phase.
+  function frame () {
+    const X = anim ? anim.X : curX();
+    const sol = anim ? anim.sol : solve(X);
+    const pstar = sol.pstar;
+    if (anim && anim.kind === 'A') {
+      // permutation sweep: the shape holds; correspondence re-threads by p*
+      return {
+        sol,
+        green: X,
+        corr: i => polyAt(X, i + anim.f * pstar),
+        mk0: polyAt(X, anim.f * pstar),
+        pcursor: anim.f * pstar 
+      };
+    }
+    if (anim && anim.kind === 'B') {
+      const Xp = X.map((_, i) => X[(i + pstar) % N]);     // permuted into pairing
+      const disp = Xp.map(p => apply2(anim.T, p));
+      return { sol, green: disp, corr: i => disp[i], mk0: disp[0], pcursor: pstar };
+    }
+    if (registered) {
+      const disp = X.map((_, i) => apply2(sol.R, X[(i + pstar) % N]));
+      return { sol, green: disp, corr: i => disp[i], mk0: disp[0], pcursor: pstar };
+    }
+    return { sol, green: X, corr: i => X[i], mk0: X[0], pcursor: null };
+  }
 
+  function draw () {
+    const fr = frame();
+    const sol = fr.sol;
+
+    rc.setTransform(Z, 0, 0, Z, 0, 0);
     rc.clearRect(0, 0, 300, 260);
     // faint correspondence lines (tangled when unregistered, ~0 when aligned)
     rc.strokeStyle = css('--color-text-secondary') || '#999'; rc.globalAlpha = 0.28; rc.lineWidth = 1;
     for (let i = 0; i < N; i++) {
-      const a = toPx(Xdisp[i]), b = toPx(Yref[i]);
+      const a = toPx(fr.corr(i)), b = toPx(Yref[i]);
       rc.beginPath(); rc.moveTo(a[0], a[1]); rc.lineTo(b[0], b[1]); rc.stroke();
     }
     rc.globalAlpha = 1;
-    // Y reference: a sequence of OPEN circles, so the X line threading through
-    // them reveals the machine-precision overlap (and where undulation deviates)
+    // Y reference: OPEN circles, so the X line threading through them reveals the
+    // machine-precision overlap (and where undulation deviates)
     rc.strokeStyle = APPLE_C; rc.lineWidth = 1.4;
     Yref.forEach((p, i) => { const q = toPx(p); rc.beginPath(); rc.arc(q[0], q[1], i === 0 ? 4.5 : 3.2, 0, Math.PI * 2); rc.stroke(); });
     // X query: a connected line
-    strokeShape(rc, Xdisp, GREEN(), 2);
+    strokeShape(rc, fr.green, GREEN(), 2);
     // landmark-0 marker on X (shows the permutation phase)
-    const q0 = toPx(Xdisp[0]); rc.fillStyle = GREEN(); rc.beginPath(); rc.arc(q0[0], q0[1], 3.5, 0, Math.PI * 2); rc.fill();
+    const q0 = toPx(fr.mk0); rc.fillStyle = GREEN(); rc.beginPath(); rc.arc(q0[0], q0[1], 3.8, 0, Math.PI * 2); rc.fill();
 
-    // objective plot (y zoomed so the peak reads)
-    const fs = sol.fs, fmin = Math.min(...fs), fmax = Math.max(...fs);
-    const X0 = 30, X1 = 222, Y0 = 16, Y1 = 178;
-    const xp = p => X0 + p / (N - 1) * (X1 - X0);
-    const yp = f => Y1 - (f - fmin) / (fmax - fmin || 1) * (Y1 - Y0);
-    oc.clearRect(0, 0, 230, 200);
-    oc.strokeStyle = css('--color-border') || '#444'; oc.lineWidth = 1; oc.strokeRect(X0, Y0, X1 - X0, Y1 - Y0);
-    oc.strokeStyle = GREEN(); oc.lineWidth = 2; oc.beginPath();
-    fs.forEach((f, p) => { const x = xp(p), y = yp(f); p ? oc.lineTo(x, y) : oc.moveTo(x, y); });
-    oc.stroke();
-    oc.strokeStyle = APPLE_C; oc.setLineDash([3, 2]); oc.beginPath(); oc.moveTo(xp(sol.pstar), Y0); oc.lineTo(xp(sol.pstar), Y1); oc.stroke(); oc.setLineDash([]);
-    oc.fillStyle = APPLE_C; oc.beginPath(); oc.arc(xp(sol.pstar), yp(fs[sol.pstar]), 4, 0, 7); oc.fill();
-    oc.fillStyle = css('--color-text-secondary') || '#999'; oc.font = '9px monospace';
-    oc.textAlign = 'center'; oc.fillText('p', (X0 + X1) / 2, 196); oc.fillText('p* = ' + sol.pstar, xp(sol.pstar), Y0 + 10);
+    drawLoss(sol, fr.pcursor);
 
     psEl.textContent = String(sol.pstar);
-    resEl.textContent = sol.resid.toFixed(3);
+    resEl.textContent = (anim ? solve(curX()).resid : sol.resid).toFixed(3);
     regBtn.textContent = registered ? 'un-register' : 'register';
   }
 
-  function onAct (act) {
-    if (act === 'rotate') { const R = rotM(Math.PI / 9); Xman = Xman.map(p => apply2(R, p)); registered = false; } else if (act === 'register') { registered = !registered; } else if (act === 'reset') { Xman = BASE.map(p => [...p]); pShift = 18; registered = false; phRange.value = '18'; }
+  // permutation-loss plot, now full-size to match its pair, with labelled axes
+  function drawLoss (sol, pcursor) {
+    const fs = sol.fs, fmin = Math.min(...fs), fmax = Math.max(...fs);
+    const X0 = 52, X1 = 286, Y0 = 20, Y1 = 218;
+    const xp = p => X0 + p / (N - 1) * (X1 - X0);
+    const yp = f => Y1 - (f - fmin) / (fmax - fmin || 1) * (Y1 - Y0);
+    oc.setTransform(Z, 0, 0, Z, 0, 0);
+    oc.clearRect(0, 0, 300, 260);
+    oc.strokeStyle = css('--color-border') || '#444'; oc.lineWidth = 1; oc.strokeRect(X0, Y0, X1 - X0, Y1 - Y0);
+
+    const TXT = css('--color-text-secondary') || '#999';
+    oc.fillStyle = TXT; oc.font = '11px monospace';
+    // x-axis ticks + label
+    oc.textAlign = 'center'; oc.textBaseline = 'top';
+    for (let p = 0; p <= N - 1; p += 6) { oc.fillText(String(p), xp(p), Y1 + 5); }
+    oc.fillText('cyclic shift  p', (X0 + X1) / 2, Y1 + 22);
+    // y-axis label (rotated)
+    oc.save();
+    oc.translate(14, (Y0 + Y1) / 2); oc.rotate(-Math.PI / 2);
+    oc.textAlign = 'center'; oc.textBaseline = 'middle';
+    oc.fillText('‖YᵀC(p)X‖*', 0, 0);
+    oc.restore();
+
+    oc.strokeStyle = GREEN(); oc.lineWidth = 2; oc.beginPath();
+    fs.forEach((f, p) => { const x = xp(p), y = yp(f); p ? oc.lineTo(x, y) : oc.moveTo(x, y); });
+    oc.stroke();
+    // p* peak marker + guide
+    oc.strokeStyle = APPLE_C; oc.setLineDash([3, 2]); oc.beginPath(); oc.moveTo(xp(sol.pstar), Y0); oc.lineTo(xp(sol.pstar), Y1); oc.stroke(); oc.setLineDash([]);
+    oc.fillStyle = APPLE_C; oc.beginPath(); oc.arc(xp(sol.pstar), yp(fs[sol.pstar]), 4, 0, 7); oc.fill();
+    oc.textAlign = 'center'; oc.textBaseline = 'bottom'; oc.fillText('p* = ' + sol.pstar, xp(sol.pstar), Y0 - 3 + 14);
+    // moving cursor that sweeps to p* during the permutation animation
+    if (pcursor != null && anim && anim.kind === 'A') {
+      const xc = xp(pcursor);
+      oc.fillStyle = GREEN(); oc.beginPath(); oc.arc(xc, yp(fs[Math.round(pcursor) % N]), 4, 0, 7); oc.fill();
+    }
+  }
+
+  // ---- register animation -------------------------------------------------
+  const DUR_A = 800, DUR_FLIP = 420, DUR_ROT = 760;
+  function startRegister () {
+    const X = curX();
+    const sol = solve(X);
+    const dec = decomposeO2(sol.R);
+    if (reduceMotion) { registered = true; draw(); return; }
+    anim = { X, sol, dec, kind: 'A', f: 0, t0: performance.now() };
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+  }
+  function tick (now) {
+    if (!anim) return;
+    const e = now - anim.t0;
+    if (anim.kind === 'A') {
+      anim.f = ease(Math.min(1, e / DUR_A));
+      if (e >= DUR_A) { anim.kind = 'B'; anim.t0 = now; anim.T = [[1, 0], [0, 1]]; }
+    } else {                                   // phase B: flip (if any) then rotate
+      const eb = e;
+      if (anim.dec.reflect) {
+        if (eb < DUR_FLIP) {
+          const tf = ease(eb / DUR_FLIP);
+          anim.T = [[1, 0], [0, 1 - 2 * tf]];               // mirror across x
+        } else if (eb < DUR_FLIP + DUR_ROT) {
+          const tr = ease((eb - DUR_FLIP) / DUR_ROT);
+          anim.T = mul2(rotM(anim.dec.theta * tr), FLIP);
+        } else { finishRegister(); return; }
+      } else {
+        if (eb < DUR_ROT) {
+          anim.T = rotM(anim.dec.theta * ease(eb / DUR_ROT));
+        } else { finishRegister(); return; }
+      }
+    }
     draw();
+    raf = requestAnimationFrame(tick);
+  }
+  function finishRegister () {
+    anim = null; registered = true; cancelAnimationFrame(raf); draw();
+  }
+
+  function onAct (act) {
+    if (act === 'rotate') {
+      cancelAnimationFrame(raf); anim = null;
+      const R = rotM(Math.PI / 9); Xman = Xman.map(p => apply2(R, p)); registered = false; draw();
+    } else if (act === 'register') {
+      if (registered || anim) { cancelAnimationFrame(raf); anim = null; registered = false; draw(); } else startRegister();
+    } else if (act === 'reset') {
+      cancelAnimationFrame(raf); anim = null;
+      Xman = BASE.map(p => apply2(rotM(INIT_ROT), p)); pShift = 18; registered = false; phRange.value = '18'; draw();
+    }
   }
   const onClick = e => { const a = e.target.closest('[data-act]'); if (a) onAct(a.dataset.act); };
   root.querySelector('.sst-iv-controls').addEventListener('click', onClick);
-  const onPhase = () => { pShift = Number(phRange.value); registered = false; draw(); };
+  const onPhase = () => { cancelAnimationFrame(raf); anim = null; pShift = Number(phRange.value); registered = false; draw(); };
   phRange.addEventListener('input', onPhase);
 
   // drag a landmark of X (operates on Xman; un-registers first)
-  const canvas = root.querySelector('[data-reg]');
   let drag = -1;
   const evModel = e => {
-    const r = canvas.getBoundingClientRect();
-    const px = (e.clientX - r.left) * (canvas.width / r.width);
-    const py = (e.clientY - r.top) * (canvas.height / r.height);
+    const r = regCanvas.getBoundingClientRect();
+    const px = (e.clientX - r.left) * (regCanvas.width / r.width) / Z;
+    const py = (e.clientY - r.top) * (regCanvas.height / r.height) / Z;
     return [(px - CX) / S, (CY - py) / S];
   };
   const onDown = e => {
+    cancelAnimationFrame(raf); anim = null;
     if (registered) { registered = false; }
     const m = evModel(e), X = curX(); let best = -1, bd = 0.05;
     for (let i = 0; i < N; i++) { const d = (X[i][0] - m[0]) ** 2 + (X[i][1] - m[1]) ** 2; if (d < bd) { bd = d; best = i; } }
@@ -208,7 +334,7 @@ export default function mount (root) {
   };
   const onMove = e => { if (drag >= 0) { Xman[drag] = evModel(e); draw(); } };
   const onUp = () => { drag = -1; };
-  canvas.addEventListener('pointerdown', onDown);
+  regCanvas.addEventListener('pointerdown', onDown);
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
 
@@ -216,9 +342,10 @@ export default function mount (root) {
 
   return {
     destroy () {
+      cancelAnimationFrame(raf);
       root.querySelector('.sst-iv-controls')?.removeEventListener('click', onClick);
       phRange.removeEventListener('input', onPhase);
-      canvas.removeEventListener('pointerdown', onDown);
+      regCanvas.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       root.innerHTML = '';

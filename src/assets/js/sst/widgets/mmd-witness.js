@@ -14,6 +14,8 @@
 
 import { normals, witness as witnessFn, decide } from './_mmd.js';
 
+const Z = 1.25;              // uniform widget zoom (backing store + drawing)
+
 export default function mount (root) {
   const N = 16, SIGMA = 0.6, H = 0.5;
   // INDEPENDENT noise for the two measurements (different seeds)
@@ -24,8 +26,8 @@ export default function mount (root) {
   root.innerHTML = `
     <div class="sst-iv">
       <figure style="margin:0">
-        <canvas class="sst-iv-canvas" width="380" height="220" data-dist></canvas>
-        <figcaption style="font-size:0.72rem;color:var(--color-text-secondary);text-align:center;margin-top:0.3rem">
+        <canvas class="sst-iv-canvas" width="475" height="275" data-dist></canvas>
+        <figcaption style="font-size:0.82rem;color:var(--color-text-secondary);text-align:center;margin-top:0.35rem">
           ρ̂ (lower) vs ρ̌ (upper) &nbsp;·&nbsp; witness f*(t)</figcaption>
       </figure>
       <div class="sst-iv-side">
@@ -34,7 +36,7 @@ export default function mount (root) {
           <div><span class="sst-iv-k">p (perm.)</span><span class="sst-iv-v" data-p>—</span></div>
           <div><span class="sst-iv-k">verdict</span><span class="sst-iv-v" data-verdict>—</span></div>
         </div>
-        <canvas class="sst-iv-canvas" width="240" height="56" data-null style="margin-bottom:0.5rem"></canvas>
+        <canvas class="sst-iv-canvas" width="300" height="70" data-null style="margin-bottom:0.5rem"></canvas>
         <label class="sst-iv-range-row">separation
           <input type="range" class="sst-range" data-sep min="0" max="320" value="100" step="1" aria-label="Separation between the two distributions">
         </label>
@@ -59,6 +61,7 @@ export default function mount (root) {
   const witness = (t, X, Y) => witnessFn(t, X, Y, H);
 
   function drawDist (X, Y) {
+    dx.setTransform(Z, 0, 0, Z, 0, 0);
     dx.clearRect(0, 0, W, 220);
     dx.strokeStyle = css('--color-border') || '#333'; dx.lineWidth = 1;
     dx.beginPath(); dx.moveTo(PAD, AX); dx.lineTo(W - PAD, AX); dx.stroke();
@@ -79,6 +82,7 @@ export default function mount (root) {
 
   // small panel: permutation null cloud + α cutoff + observed marker
   function drawNull (nulls, obs, cut) {
+    nx.setTransform(Z, 0, 0, Z, 0, 0);
     nx.clearRect(0, 0, 240, 56);
     const lo = Math.min(nulls[0], obs), hi = Math.max(nulls[nulls.length - 1], obs);
     const span = (hi - lo) || 1;
