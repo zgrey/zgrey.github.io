@@ -23,6 +23,9 @@ errors against a heavily refined reference: the <strong>scale operator</strong> 
   and a real segmented boundary, <strong style="color:#c9603f">apple-1</strong> (MPEG-7), as a periodic cubic
   spline. The analytic curve converges <strong>spectrally</strong> (a near-vertical plunge to the floor); the
   measured boundary, with only finite smoothness, converges <strong>algebraically</strong>.</p>
-  <p class="sst-note">Both still beat the \(1/\sqrt{n}\) of Monte Carlo &mdash; what makes SST cheap enough for
-  tens of thousands of shapes &mdash; but the honest picture is that real data does not enjoy the analytic rate.</p>
+  <p class="sst-note">The dashed <strong>reference slopes</strong> \(N^{-1/2}, N^{-2}, N^{-4}\) make the order
+  legible: on log&ndash;log an algebraic rate is a straight line, so the apple's slope reads off directly &mdash;
+  it sits between \(N^{-2}\) and \(N^{-4}\). Algebraic isn't <em>bad</em>; it is just slow next to Cassini's
+  spectral plunge, and it still beats Monte&ndash;Carlo's \(N^{-1/2}\) &mdash; what makes SST cheap enough for
+  tens of thousands of shapes.</p>
 </div>

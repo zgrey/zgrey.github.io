@@ -19,8 +19,10 @@ the landmark indexing starts) &mdash; is resolved by <strong>cyclic Procrustes</
 
 <div class="sst-frag">
   <p>Here the apple is registered against a phase-shifted, rotated copy of itself. The naive
-  index-to-index pairing is tangled; cyclic Procrustes finds the cyclic offset \(p_*\) (the peak of
-  \(\|Y^{\top}C(p)X\|_*\)) and the rotation \(R_*\), and the shapes snap together.</p>
+  index-to-index pairing is tangled. Press <strong>register</strong> and the fix plays out <em>in order</em>:
+  first the optimal cyclic offset \(p_*\) (the peak of \(\|Y^{\top}C(p)X\|_*\)) re-threads the correspondence,
+  then the rotation \(R_*\) &mdash; with an explicit mirror flip when \(R_*\) is a reflection &mdash; rolls
+  \(X\) onto \(Y\).</p>
   <p class="sst-note">Drag a landmark to add real undulation: registration still removes the phase and rotation,
   and the <em>residual</em> that remains is the genuine shape difference &mdash; exactly the separation SST is after.</p>
 </div>

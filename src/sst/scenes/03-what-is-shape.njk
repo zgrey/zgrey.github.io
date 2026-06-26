@@ -14,7 +14,15 @@ choices:
 <p class="sst-lead">A "preshape" is the raw image of a curve; a <strong>shape</strong> is what's left after we
 quotient out the nuisances we don't care about.</p>
 
-<p>\[ [\,\mathcal{K}(\bm{c})\,] \in \mathcal{C}_d \big/ \big(O(d)\times \mathrm{Diff}(\mathcal{I})\big) \]</p>
+<p>{% raw %}\[ [\,\mathcal{K}(\bm{c})\,] \in \mathcal{C}_d \big/ \big(O(d)\times
+\cancelto{\{\,\textcolor{#6ea262}{\gamma}\,\}}{\mathrm{Diff}(\mathcal{I})}\big) \]{% endraw %}</p>
+
+<div class="sst-frag">
+  <p>That struck-through \(\mathrm{Diff}(\mathcal{I})\) is the <strong>finite</strong> caveat. The
+  reparametrization group is infinite-dimensional in general &mdash; but we never instantiate all of it. Once a
+  shape is <strong>collocated at fixed quadrature nodes</strong>, its parametrization collapses to a single
+  representative {% raw %}\(\{\textcolor{#6ea262}{\gamma}\}\){% endraw %}: discretization <em>is</em> a choice of reparametrization.</p>
+</div>
 
 <div class="sst-frag">
   <p>We need finite representations of shape that are</p>

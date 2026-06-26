@@ -4,7 +4,7 @@ seq: 12
 spine: 12
 act: Choose Your Path
 title: The Hub
-mount: none
+mount: widget:hub-graph
 choices:
   - label: "▶ Story: Chips & Defects"
     target: chips-problem
@@ -21,13 +21,11 @@ choices:
 and a polar decomposition that <strong>separates undulation from scale</strong>, computed by fast quadrature.</p>
 
 <div class="sst-frag">
-  <p>From here the story branches. Each spoke reuses everything above and tells a different application tale:</p>
-  <ul>
-    <li><strong>Chips &amp; Defects</strong> &mdash; witnessing discrepancies in advanced packages (xCT). <em>Live now.</em></li>
-    <li><strong>EBSD Grains</strong> &mdash; label-free, explainable classification of microstructure. <em>Live now.</em></li>
-    <li><strong>Airfoils / G2Aero</strong> &mdash; Grassmannian shape design &amp; blade building. <em>Live now.</em></li>
-    <li><strong>Hailstone LBM</strong> &mdash; boundaries driving aerodynamic simulation. <em>(WIP)</em></li>
-    <li><strong>Topological Shape Analysis</strong> &mdash; the road ahead. <em>(WIP)</em></li>
-  </ul>
-  <p class="sst-note">Pick the live spoke below, or replay the prologue. More spokes branch off here as they're built.</p>
+  <p>From here the story is an <strong>undirected graph</strong>, not a line: SST is the centre node and every
+  application spokes off it &mdash; <strong>Chips</strong> (witnessing xCT discrepancies),
+  <strong>EBSD</strong> (label-free grain classification), <strong>Airfoils / G2Aero</strong> (Grassmannian
+  design &amp; blade building), with <strong>Hailstone LBM</strong> and <strong>Topological Shape Analysis</strong>
+  still under construction. Each spoke reuses the whole engine above, and they connect to one another.</p>
+  <p class="sst-note">Click a live node in the graph to jump into its story, or use the choices below. More spokes
+  branch off here as they're built.</p>
 </div>
