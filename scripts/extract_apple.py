@@ -6,7 +6,7 @@ centres and scale-normalizes to a canonical size and emits a JS module the
 widgets import.
 
 Run (website repo root, venv active; needs numpy + scikit-image):
-    USERPROFILE="$USERPROFILE" ~/venv/Scripts/python.exe scripts/extract_apple.py
+    USERPROFILE="$USERPROFILE" ~/venvs/zgrey-github-io/Scripts/python.exe scripts/extract_apple.py
 
 Source image: TDA-SST/data/MPEG7/apples/apple-1.png (MPEG-7 shape dataset).
 Outputs:

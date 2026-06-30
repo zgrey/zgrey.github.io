@@ -13,7 +13,7 @@
 # (MSIX) Python the .exe goes through an app-execution alias that strips
 # USERPROFILE, which breaks manim's Path.home() config lookup. Override the
 # interpreter with MANIM_PY if needed, and export USERPROFILE on Store Python:
-#   USERPROFILE="$USERPROFILE" MANIM_PY=~/venv/Scripts/python.exe ./manim/render.sh
+#   USERPROFILE="$USERPROFILE" MANIM_PY=~/venvs/zgrey-github-io/Scripts/python.exe ./manim/render.sh
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

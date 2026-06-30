@@ -15,7 +15,7 @@ Storyboard (per Z. Grey):
  10. Morph the ellipse into a 2D KDE of the Log points on the tangent space.
 
 Render (website repo root, venv active):
-    USERPROFILE="$USERPROFILE" MANIM_PY=~/venv/Scripts/python.exe \
+    USERPROFILE="$USERPROFILE" MANIM_PY=~/venvs/zgrey-github-io/Scripts/python.exe \
         QUALITY=l bash manim/render.sh tpca
 """
 

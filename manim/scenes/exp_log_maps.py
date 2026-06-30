@@ -5,7 +5,7 @@ point p is pushed onto the manifold by the geodesic Exp_p(v) reaching q; Log_p(q
 recovers v. The model planar case of the SST manifold (Gr, SPD) machinery.
 
 Render (website repo root, venv active):
-    USERPROFILE="$USERPROFILE" MANIM_PY=~/venv/Scripts/python.exe \
+    USERPROFILE="$USERPROFILE" MANIM_PY=~/venvs/zgrey-github-io/Scripts/python.exe \
         QUALITY=l bash manim/render.sh exp_log_maps
 """
 

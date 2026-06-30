@@ -14,7 +14,7 @@ eigenfunctions v(s) = c(s) . A . diag(1/sigma). Two error metrics vs a refined
   efuncErr(N) = max_s ||v_N(s) - v_ref(s)||  (eigenfunction sup-error on a grid)
 
 Run (website repo root, venv active; numpy + scipy):
-    USERPROFILE="$USERPROFILE" ~/venv/Scripts/python.exe scripts/compute_nystrom_convergence.py
+    USERPROFILE="$USERPROFILE" ~/venvs/zgrey-github-io/Scripts/python.exe scripts/compute_nystrom_convergence.py
 
 Output: src/assets/js/sst/widgets/_nystrom_data.js
 """

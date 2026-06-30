@@ -6,7 +6,7 @@ each fiber to a single point on the base Gr(2,n). Scale-invariance pi(XM)=pi(X)
 made visual — the undulation [X] is what survives.
 
 Render (website repo root, venv active):
-    USERPROFILE="$USERPROFILE" MANIM_PY=~/venv/Scripts/python.exe \
+    USERPROFILE="$USERPROFILE" MANIM_PY=~/venvs/zgrey-github-io/Scripts/python.exe \
         QUALITY=l bash manim/render.sh fiber_bundle
 """
 
