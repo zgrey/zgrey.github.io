@@ -5,9 +5,9 @@
  * wired to the others, so the whole thing reads as a connected, undirected graph
  * rather than a list. Live spokes are clickable (they drive the adventure into
  * that story); WIP spokes are dimmed. The same widget powers the in-adventure
- * Hub scene and the standalone /sst/map/ page:
+ * Hub scene and the map panel embedded in /research/:
  *   - inside the player, a click appends the target scene (no reload);
- *   - on the map page (no player), it navigates to /sst/#<id>.
+ *   - with no player present, it deep-links into the research-page embed.
  *
  * SVG is resolution-independent, so there is no canvas zoom here; colours use
  * CSS custom properties via inline `style`, so light/dark theming stays live.
@@ -100,7 +100,7 @@ export default function mount (root) {
     if (!target) return;
     const p = player();
     if (p && typeof p.append === 'function') p.append(target);
-    else window.location.href = '/sst/#' + target;
+    else window.location.href = '/research/#sst-' + target;
   }
 
   function node (spec, r, core) {

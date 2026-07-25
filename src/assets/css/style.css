@@ -487,6 +487,33 @@ a:hover, a:focus {
   margin-right: 1rem;
 }
 
+.code-project .project-refs {
+  margin-top: 1.5rem;
+}
+
+.code-project .project-refs h3 {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.code-project .project-refs ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.code-project .project-refs li {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  padding-left: 1rem;
+  border-left: 1px solid var(--color-border);
+  margin-bottom: 0.6rem;
+}
+
 /* ===== EVIE Chat Interface ===== */
 .evie-container {
   display: flex;
@@ -883,6 +910,9 @@ a:hover, a:focus {
 /* two-panel widgets (svd-polar, nystrom) */
 .sst-sp-panels { display: flex; flex-wrap: wrap; gap: 1rem; }
 .sst-sp-panels figure { margin: 0; }
+/* Paired panels meant to be read side by side: size each figure to its canvas
+   so a long caption can't widen it into a wrap. */
+.sst-sp-duo figure { width: 275px; max-width: 100%; }
 .sst-sp-panels figcaption {
   font-size: 0.82rem;
   color: var(--color-text-secondary);
@@ -954,7 +984,52 @@ a:hover, a:focus {
 .sst-pm-verdict { color: var(--color-text-heading); margin: 0.3rem 0 0.6rem; }
 
 /* adventure map */
-.sst-mapwrap { max-width: 64rem; }
+/* ===== SST embedded in the research page ===== */
+/* The walkthrough has no standalone page; it boots behind this launcher inside
+   the Separable Shape Tensors section. */
+.sst-embed { margin: 2rem 0 0.5rem; }
+
+.sst-launch {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  color: var(--color-text-heading);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent-primary);
+  border-radius: 6px;
+  padding: 0.9rem 1.1rem;
+  transition: border-color 0.15s linear, color 0.15s linear;
+}
+.sst-launch:hover,
+.sst-launch:focus-visible {
+  color: var(--color-accent-hover);
+  border-left-color: var(--color-accent-hover);
+}
+.sst-launch-sub {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+}
+/* `display: block` above outranks the UA [hidden] rule, so restate it */
+.sst-launch[hidden] { display: none; }
+
+/* Inline variant: the standalone page supplied the outer page chrome, so drop
+   the auto side margins and let it sit in the section's flow. */
+.sst-inline { margin-left: 0; margin-right: 0; max-width: none; }
+.sst-inline .sst-bar { top: 0.5rem; }
+
+.sst-mappanel {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg-elevated);
+}
+.sst-mappanel[hidden] { display: none; }
 .sst-maphint { color: var(--color-text-secondary); font-size: 0.85rem; margin: 1rem 0; }
 .sst-map { display: flex; flex-wrap: wrap; gap: 1.5rem; }
 .sst-map-act {
@@ -968,6 +1043,12 @@ a:hover, a:focus {
 .sst-map-act h3 { margin-top: 0; color: var(--color-accent-primary); font-size: 0.95rem; }
 .sst-map-node {
   display: block;
+  /* now a <button> (jumps the embedded player) — reset UA button styling so it
+     still reads as the card it was as an <a> */
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-left: 3px solid var(--color-accent-primary);
