@@ -7,11 +7,20 @@
  * whole history stays on the page and you scroll up to revisit it, like a
  * prompt/transcript. It should feel like exploring, not clicking through slides.
  *
- * Loaded globally (like airfoil-anim.js); acts only when #sst-app / #sst-map is
- * present. window.initSST() re-boots it after SPA navigation.
+ * Loaded globally (like airfoil-anim.js); acts only when #sst-app is present.
+ * window.initSST() re-boots it after SPA navigation.
+ *
+ * The player is EMBEDDED in the SST section of /research/ (there is no
+ * standalone /sst/ page). Two consequences:
+ *   - it boots lazily behind #sst-launch so /research/ stays a readable page;
+ *   - scene ids are written to the URL under an `sst-` prefix so they cannot
+ *     collide with the research page's own section anchors.
+ * /sst/scenes.json survives as a data endpoint (built from the scene
+ * collection), it is not a page.
  */
 
 const MANIFEST_URL = '/sst/scenes.json';
+const HASH_PREFIX = 'sst-';
 
 let manifestPromise = null;
 function loadManifest () {
@@ -52,13 +61,19 @@ class Player {
     this.titleEl = root.querySelector('#sst-scene-title');
     this.fsBtn = root.querySelector('#sst-fullscreen');
     this.restartBtn = root.querySelector('#sst-restart');
+    this.mapToggle = document.getElementById('sst-map-toggle');
+    this.mapPanel = document.getElementById('sst-mappanel');
 
     this.widgets = [];     // mounted widget handles ({ destroy() })
     this.last = null;      // id of the most recently appended scene
 
     this.wire();
 
-    const startId = (location.hash || '').replace(/^#/, '') ||
+    // Only an `sst-`-prefixed hash names a scene; anything else on the page
+    // (e.g. #spectrum-sharing) belongs to the research page, not to us.
+    const hash = (location.hash || '').replace(/^#/, '');
+    const fromHash = hash.startsWith(HASH_PREFIX) ? hash.slice(HASH_PREFIX.length) : '';
+    const startId = fromHash ||
       root.dataset.start || (manifest.scenes[0] && manifest.scenes[0].id);
     this.append(startId, { animate: false, scroll: false });
   }
@@ -66,6 +81,7 @@ class Player {
   wire () {
     this.fsBtn?.addEventListener('click', () => this.toggleFullscreen());
     this.restartBtn?.addEventListener('click', () => this.restart());
+    this.mapToggle?.addEventListener('click', () => this.toggleMap());
     this._onKey = e => {
       if (!this.root.isConnected) return;
       if (e.key.toLowerCase() === 'f' && !/INPUT|TEXTAREA/.test(e.target.tagName)) this.toggleFullscreen();
@@ -87,6 +103,16 @@ class Player {
   toggleFullscreen () {
     if (!document.fullscreenElement) this.root.requestFullscreen?.();
     else document.exitFullscreen?.();
+  }
+
+  // The map is a panel inside the embed rather than its own page, so opening it
+  // is a local toggle and picking a node jumps the player straight to that scene.
+  toggleMap (force) {
+    if (!this.mapPanel) return;
+    const open = force === undefined ? this.mapPanel.hasAttribute('hidden') : force;
+    this.mapPanel.toggleAttribute('hidden', !open);
+    this.mapToggle?.setAttribute('aria-expanded', String(open));
+    if (open) this.mapPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   restart () {
@@ -129,7 +155,7 @@ class Player {
 
     if (this.actEl) this.actEl.textContent = scene.act || 'SST';
     if (this.titleEl) this.titleEl.innerHTML = scene.title || '';
-    history.replaceState(null, '', '#' + id);
+    history.replaceState(null, '', '#' + HASH_PREFIX + id);
 
     if (scroll) {
       requestAnimationFrame(() => block.scrollIntoView({
@@ -204,7 +230,7 @@ class Player {
 
 // ---- Map ------------------------------------------------------------------
 
-function renderMap (mapEl, manifest) {
+function renderMap (mapEl, manifest, player) {
   mapEl.innerHTML = '';
   const acts = [];
   const seen = new Map();
@@ -218,12 +244,18 @@ function renderMap (mapEl, manifest) {
     col.className = 'sst-map-act';
     col.innerHTML = `<h3>${group.act}</h3>`;
     group.scenes.forEach(s => {
-      const node = document.createElement('a');
+      // Buttons, not links: the map lives inside the player now, so a node
+      // jumps the transcript rather than navigating to a page.
+      const node = document.createElement('button');
+      node.type = 'button';
       node.className = 'sst-map-node';
-      node.href = '/sst/#' + s.id;
       node.innerHTML = `<span class="sst-map-node-title">${s.title}</span>`;
       const edges = (s.choices || []).map(c => c.target);
       if (edges.length) node.innerHTML += `<span class="sst-map-edges">→ ${edges.join(', ')}</span>`;
+      node.addEventListener('click', () => {
+        player?.append(s.id);
+        player?.toggleMap(false);
+      });
       col.appendChild(node);
     });
     mapEl.appendChild(col);
@@ -242,18 +274,74 @@ function mountHubGraph (hostId) {
     .catch(err => console.error('SST hub graph failed', err));
 }
 
-function init () {
-  const app = document.getElementById('sst-app');
-  const mapEl = document.getElementById('sst-map');
-  if (!app && !mapEl) return;
-
-  if (app && app._sstCleanup) app._sstCleanup();
-
-  loadManifest().then(manifest => {
-    if (app && document.body.contains(app)) app._sstPlayer = new Player(app, manifest);
-    if (mapEl && document.body.contains(mapEl)) renderMap(mapEl, manifest);
+function boot (app) {
+  if (app._sstCleanup) app._sstCleanup();
+  return loadManifest().then(manifest => {
+    if (!document.body.contains(app)) return;
+    const player = new Player(app, manifest);
+    app._sstPlayer = player;
+    const mapEl = document.getElementById('sst-map');
+    if (mapEl) renderMap(mapEl, manifest, player);
     mountHubGraph('sst-hub-graph');
   }).catch(err => console.error('SST manifest load failed', err));
+}
+
+// Widgets used as standalone figures in page prose (outside any scene), e.g.
+// the Pareto-tracing figure in the spectrum-sharing section. Idempotent: a
+// host already carrying a widget is skipped, so SPA re-init is safe.
+function mountStandaloneWidgets () {
+  document.querySelectorAll('[data-widget]').forEach(host => {
+    if (host._sstWidget) return;
+    const name = host.dataset.widget;
+    if (!/^[a-z0-9-]+$/.test(name)) return;
+    import(`./widgets/${name}.js`)
+      .then(mod => {
+        if (!host.isConnected || host._sstWidget) return;
+        host._sstWidget = (mod.default || mod.mount)(host) || true;
+      })
+      .catch(err => {
+        host.innerHTML = `<p class="sst-note">figure “${name}” failed to load.</p>`;
+        console.error(err);
+      });
+  });
+}
+
+function init () {
+  mountStandaloneWidgets();
+
+  const app = document.getElementById('sst-app');
+  if (!app) return;
+
+  const launch = document.getElementById('sst-launch');
+  const closeBtn = document.getElementById('sst-close');
+
+  // No launcher (or the URL already names a scene) => boot straight away.
+  const wantsScene = (location.hash || '').replace(/^#/, '').startsWith(HASH_PREFIX);
+  if (!launch || wantsScene) {
+    app.hidden = false;
+    if (launch) launch.hidden = true;
+    boot(app);
+    return;
+  }
+
+  const open = () => {
+    app.hidden = false;
+    launch.hidden = true;
+    boot(app).then(() => app.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+  launch.addEventListener('click', open, { once: true });
+
+  closeBtn?.addEventListener('click', () => {
+    if (app._sstCleanup) app._sstCleanup();
+    app.hidden = true;
+    launch.hidden = false;
+    // Drop the scene hash so a reload returns to the plain research page.
+    if ((location.hash || '').replace(/^#/, '').startsWith(HASH_PREFIX)) {
+      history.replaceState(null, '', location.pathname);
+    }
+    launch.addEventListener('click', open, { once: true });
+    launch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
 }
 
 window.initSST = init;
