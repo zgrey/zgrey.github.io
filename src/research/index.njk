@@ -92,8 +92,12 @@ title: Research
 
   <h3>Where the subspace enters</h3>
   <p>The tracing step needs \(H(\lambda)^{-1}\), which is exactly where a large \(m\) hurts. Each criterion carries its own active subspace, obtained from the eigendecomposition of its average gradient outer product,</p>
-  <p>\[ C_i = \int_X \nabla f_i(x)\, \nabla f_i(x)^\top \rho(x)\, dx = W_i \Lambda_i W_i^\top, \quad i = 1,2, \]</p>
-  <p>and the dominant eigenvectors of the two are combined into a single aggregate basis \(U \in \mathbb{R}^{m \times r}\) with \(r \ll m\) &mdash; a subspace that must serve <em>both</em> criteria, since a direction inactive for one may well be active for the other. Tracing then runs in the reduced coordinates \(y = U^\top x\), so the Hessian solve is \(r \times r\). Choosing \(r = 2\) additionally buys explainability: the entire trade-off becomes something you can draw and inspect, rather than a black-box optimizer output.</p>
+  <p>\[ C_i = \int_X \nabla f_i(x)\, \nabla f_i(x)^\top \rho(x)\, dx = W_i \Lambda_i W_i^\top, \quad i = 1,2. \]</p>
+  <p>The two criteria do not agree on which directions matter, so neither subspace will serve on its own &mdash; a direction inactive for one may well be active for the other. Rather than stacking the two bases, the aggregate is found <em>geometrically</em>. The dominant \(r\)-dimensional eigenspaces are points \([W_1],[W_2] \in \mathrm{Gr}(r,m)\), and the geodesic between them</p>
+  <p>\[ [U(t)] = \exp_{[W_1]}\!\big(t \log_{[W_1]}[W_2]\big), \qquad t \in [0,1], \]</p>
+  <p>sweeps a one-parameter family of candidate subspaces running from one criterion's answer to the other's. A scalar sub-optimization then selects the point along that geodesic which <em>balances</em> how well the shared subspace explains each criterion, measured by the coefficient of determination \(R^2_i(t)\) of the corresponding ridge approximation,</p>
+  <p>\[ t^\star = \underset{t \in [0,1]}{\arg\min}\ \big|\, R^2_1(t) - R^2_2(t) \,\big|, \qquad U := U(t^\star). \]</p>
+  <p>Tracing then runs in the reduced coordinates \(y = U^\top x\), so the Hessian solve is \(r \times r\) rather than \(m \times m\). Choosing \(r = 2\) additionally buys explainability: the entire trade-off becomes something you can draw and inspect, rather than a black-box optimizer output. Note this is the same Grassmannian machinery as the shape work above &mdash; here the geodesic interpolates between two notions of <em>which directions matter</em>, rather than between two shapes.</p>
 
   <div class="sst-widget" data-widget="pareto-trace"></div>
 
