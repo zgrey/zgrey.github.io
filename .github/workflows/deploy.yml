@@ -26,7 +26,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # html-validate 11 requires ^22.22.0 || >=24.8.0 and eslint 10
+          # requires ^20.19.0 || ^22.13.0 || >=24; Node 24 is the active LTS
+          # and satisfies every engine constraint in the tree.
+          node-version: 24
           cache: npm
 
       - run: npm ci

@@ -245,7 +245,7 @@ class SimplicialScene {
     const maxSteps = dx + dy + 1;
     for (let step = 0; step < maxSteps; step++) {
       // Pick character based on direction
-      let ch = '+';
+      let ch;
       if (dx > dy * 2) ch = lineChars.h;
       else if (dy > dx * 2) ch = lineChars.v;
       else ch = (sx === sy) ? lineChars.d2 : lineChars.d1;
