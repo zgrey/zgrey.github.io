@@ -241,15 +241,18 @@ class SimplicialScene {
     let err = dx - dy;
 
     const lineChars = { h: '-', v: '|', d1: '/', d2: '\\' };
+
+    // Direction is fixed for the whole line — dx, dy, sx and sy are all consts
+    // computed above — so pick the glyph once instead of re-deriving it on
+    // every step of the walk.
+    let ch;
+    if (dx > dy * 2) ch = lineChars.h;
+    else if (dy > dx * 2) ch = lineChars.v;
+    else ch = (sx === sy) ? lineChars.d2 : lineChars.d1;
+
     let cx = x0, cy = y0;
     const maxSteps = dx + dy + 1;
     for (let step = 0; step < maxSteps; step++) {
-      // Pick character based on direction
-      let ch;
-      if (dx > dy * 2) ch = lineChars.h;
-      else if (dy > dx * 2) ch = lineChars.v;
-      else ch = (sx === sy) ? lineChars.d2 : lineChars.d1;
-
       renderer.setChar(cy, cx, ch, COLOR_DIM_GREEN_F());
 
       if (cx === x1 && cy === y1) break;
