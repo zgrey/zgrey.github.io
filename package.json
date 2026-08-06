@@ -20,10 +20,12 @@
   },
   "comments": {
     "js-yaml": "gray-matter@4.0.3 pins js-yaml ^3.13.1; we override it to 4.x to patch CVE-2026-53550 (GHSA-h67p-54hq-rp68) and GHSA-52cp-r559-cp3m, AND set a js-yaml 4.x front-matter engine in eleventy.config.js (gray-matter's default calls the removed safeLoad).",
-    "@11ty/recursive-copy": "eleventy 3.1.6 pins ^4.0.4, which depends on minimatch 3.x -> brace-expansion 1.x, still vulnerable to GHSA-mh99-v99m-4gvg (fixed only in brace-expansion >=5.0.8). recursive-copy 5.0.2 uses minimatch ^10.2.4. Drop this override once eleventy ships a release depending on recursive-copy >=5."
+    "@11ty/recursive-copy": "eleventy 3.1.6 pins ^4.0.4, which depends on minimatch 3.x -> brace-expansion 1.x, still vulnerable to GHSA-mh99-v99m-4gvg (fixed only in brace-expansion >=5.0.8). recursive-copy 5.0.2 uses minimatch ^10.2.4. Drop this override once eleventy ships a release depending on recursive-copy >=5.",
+    "brace-expansion": "eslint 10.x -> minimatch 10.x resolves brace-expansion 5.0.8, which bypasses the GHSA-mh99-v99m-4gvg mitigation (GHSA-rgw5-rvv9-x895, DoS via unbounded intermediate arrays). Fixed in 5.0.9."
   },
   "overrides": {
     "js-yaml": "^4.3.0",
-    "@11ty/recursive-copy": "^5.0.2"
+    "@11ty/recursive-copy": "^5.0.2",
+    "brace-expansion": "^5.0.9"
   }
 }
