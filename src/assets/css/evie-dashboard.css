@@ -4,6 +4,12 @@
    fails the build on it. Linked from base.njk via the pageCss front-matter
    hook. */
 .evd { max-width: 62rem; margin: 0 auto; }
+.evd-soon {
+  max-width: 62rem; margin: 1.4rem auto;
+  border-left: 3px solid var(--color-accent-hover);
+  background: var(--color-bg-secondary);
+  padding: 0.9rem 1rem; font-size: 0.92rem; line-height: 1.6;
+}
 .evd h3 { margin-top: 2.4rem; }
 .evd-lede { font-size: 1.05rem; color: var(--color-text-heading); }
 .evd-m { font-style: italic; }
