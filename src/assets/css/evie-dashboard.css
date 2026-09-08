@@ -1,0 +1,51 @@
+/* Styles for the EVIE dashboard worked example (/evie/dashboard/).
+   Kept out of the page itself because layouts/page.njk wraps content in
+   <article>, and <style> is not permitted content there -- html-validate
+   fails the build on it. Linked from base.njk via the pageCss front-matter
+   hook. */
+.evd { max-width: 62rem; margin: 0 auto; }
+.evd h3 { margin-top: 2.4rem; }
+.evd-lede { font-size: 1.05rem; color: var(--color-text-heading); }
+.evd-m { font-style: italic; }
+.evd-credit, .evd-caveat {
+  border-left: 3px solid var(--color-accent-primary);
+  background: var(--color-bg-secondary);
+  padding: 0.85rem 1rem; margin: 1.2rem 0; font-size: 0.88rem;
+  line-height: 1.6;
+}
+.evd-caveat { border-left-color: var(--color-text-secondary); }
+.evd-note { font-size: 0.9rem; color: var(--color-text-secondary); }
+.evd-figure {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  padding: 0.75rem; margin: 1rem 0;
+}
+.evd-figure canvas, .evd-panel canvas { width: 100%; display: block; }
+.evd-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: 1rem; margin: 1.2rem 0;
+}
+.evd-panel {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  padding: 0.75rem; margin: 0;
+}
+.evd-panel figcaption {
+  font-size: 0.78rem; text-transform: lowercase;
+  letter-spacing: 0.06em; color: var(--color-text-heading);
+  margin-bottom: 0.5rem;
+}
+.evd-cap { font-size: 0.8rem; color: var(--color-text-secondary); margin: 0.6rem 0 0; }
+.evd-legend {
+  display: flex; gap: 1.2rem; flex-wrap: wrap;
+  font-size: 0.8rem; color: var(--color-text-secondary); margin-top: 0.5rem;
+}
+.evd-legend span.k { display: inline-block; width: 10px; height: 10px; margin-right: 0.35rem; }
+.evd-verdict {
+  font-size: 1rem; border-left: 3px solid var(--color-accent-hover);
+  padding-left: 1rem;
+}
+.evd-pre {
+  background: var(--color-bg-elevated); border: 1px solid var(--color-border);
+  padding: 0.8rem; overflow-x: auto; font-size: 0.82rem;
+}

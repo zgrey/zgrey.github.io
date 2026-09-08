@@ -1,0 +1,422 @@
+---
+layout: layouts/page.njk
+title: EVIE dashboard — worked example
+description: Separable shape tensors and a two-sample MMD test on solar coronal boundaries, computed with EVIE.
+noindex: true
+pageCss: /assets/css/evie-dashboard.css
+# ---------------------------------------------------------------------------
+# NOT PUBLISHED YET. This page is excluded from the build by an `ignores` entry
+# in eleventy.config.js, so nothing is written into _site and nothing is
+# discoverable while the `evie` repository is still private and under NIST
+# internal review.
+#
+# `permalink: false` would be the obvious way to do that, and it does keep the
+# page out of _site -- but Eleventy 3.1.6 then raises "Having trouble writing
+# to false" and exits non-zero, which would fail CI on every build. The
+# config-level ignore is the one that leaves a green build.
+#
+# TO GO LIVE, in one change: delete the ignore line in eleventy.config.js, drop
+# `noindex: true` above, and set REPO_URL in the page script to the public
+# repository URL. Nothing else needs to move.
+#
+# The data comes from src/_data/evieDemo.json, which Eleventy loads as global
+# data and never copies to _site -- so the numbers ship only when this page
+# does.
+# ---------------------------------------------------------------------------
+---
+
+<article class="evd">
+
+<h2>Shape and texture in the solar corona</h2>
+
+<p class="evd-lede">
+  A worked example run end to end through <strong>EVIE</strong> — segmentation,
+  separable shape tensors, principal geodesic analysis, and a two-sample
+  maximum-mean-discrepancy test. Every number and every curve on this page came
+  out of the pipeline. Nothing here is illustrative.
+</p>
+
+<div class="evd-credit">
+  Imagery courtesy of <strong>NASA/SDO</strong> and the AIA, EVE, and HMI
+  science teams — <a href="https://sdo.gsfc.nasa.gov/">sdo.gsfc.nasa.gov</a>.
+  Three AIA 193&nbsp;Å frames, 2048&nbsp;×&nbsp;2048, grouped by observation
+  date.
+</div>
+
+<h3>The question</h3>
+
+<p>
+  Each frame segments into hundreds of closed level-set boundaries — the
+  outlines of coronal structure. One image is therefore already an
+  <em>ensemble</em> of shapes. Group the frames by date and a question follows
+  naturally: <strong>does the distribution of coronal loop shapes change from
+  one day to the next?</strong>
+</p>
+
+<p>
+  A separable shape tensor splits each closed curve into two independent
+  factors — a point on the Grassmannian <span class="evd-m">Gr(2,&nbsp;n)</span>
+  carrying <em>undulation</em> (how the outline wiggles), and a
+  symmetric-positive-definite matrix carrying <em>anisotropic scaling</em> (how
+  big and how elongated it is). The test can then ask about each factor
+  separately, and say <em>which kind</em> of difference it found.
+</p>
+
+<h3>Segmented boundaries</h3>
+
+<p class="evd-note">
+  The traced level sets, in image pixel coordinates. Colour marks the
+  observation date. These are the actual curves the pipeline consumed.
+</p>
+
+<div class="evd-figure">
+  <canvas id="evdCurves" height="420"></canvas>
+  <div class="evd-legend" id="evdCurvesLegend"></div>
+</div>
+
+<h3>What the shape tensors say</h3>
+
+<div class="evd-grid">
+  <figure class="evd-panel">
+    <figcaption>Grassmannian PGA spectrum</figcaption>
+    <canvas id="evdSpec" height="200"></canvas>
+    <p class="evd-cap">Singular values <span class="evd-m">σ<sub>k</sub></span>
+      of the undulation factor, log scale. The decay says how many modes carry
+      the ensemble's shape variation.</p>
+  </figure>
+
+  <figure class="evd-panel">
+    <figcaption>Distance from the intrinsic mean</figcaption>
+    <canvas id="evdScatter" height="200"></canvas>
+    <p class="evd-cap">Each point is one boundary:
+      <span class="evd-m">d<sub>Gr</sub></span> (undulation) against
+      <span class="evd-m">d<sub>SPD</sub></span> (scaling), coloured by date.
+      The two clouds overlap.</p>
+  </figure>
+
+  <figure class="evd-panel">
+    <figcaption>Fréchet / Karcher mean</figcaption>
+    <canvas id="evdMean" height="200"></canvas>
+    <p class="evd-cap">The intrinsic mean shape (solid) over the standardized
+      ensemble (faint). Computed on the manifold, not by averaging
+      coordinates.</p>
+  </figure>
+
+  <figure class="evd-panel">
+    <figcaption>Decision landscape</figcaption>
+    <canvas id="evdDland" height="200"></canvas>
+    <p class="evd-cap">Test outcome across the analysis grid — reduced
+      dimension <span class="evd-m">r</span> against landmark count
+      <span class="evd-m">n<sub>re</sub></span>. Circle = fail to reject,
+      × = reject.</p>
+  </figure>
+</div>
+
+<h3>The answer, and the interesting part</h3>
+
+<p id="evdVerdict" class="evd-verdict"></p>
+
+<p>
+  A single run at one smoothing scale is a weak claim, so the pipeline sweeps
+  the scale and re-runs the whole grid at each one. That is where this example
+  stops being flat:
+</p>
+
+<div class="evd-figure">
+  <canvas id="evdSweep" height="200"></canvas>
+  <div class="evd-legend" id="evdSweepLegend"></div>
+</div>
+
+<p id="evdSweepText"></p>
+
+<div class="evd-caveat">
+  <strong>Read this before drawing a solar-physics conclusion.</strong>
+  The two ensembles are <em>imbalanced</em> — <span id="evdN1"></span> boundaries
+  from two frames on the first date against <span id="evdN2"></span> from a
+  single frame on the second. The surviving boundary count also changes with
+  smoothing scale, because smoothing decides which small structures clear the
+  minimum-arc-length threshold. A decision that appears at one scale and not
+  another is therefore evidence about <em>scale sensitivity of the statistic</em>,
+  which is exactly what the sweep exists to expose — not, on this evidence, a
+  measured change in the corona. Reporting it the other way round is the
+  mistake the sweep is designed to prevent.
+</div>
+
+<h3>Reproducing this</h3>
+
+<p>
+  The dataset ships with the code as <code>data/sun_temporal/</code>, and this
+  is one command:
+</p>
+
+<pre class="evd-pre"><code>evie-mmd-g2image --data-path data/sun_temporal \
+    --r 5 10 20 --n-re 200 500 --scales 3 5 7</code></pre>
+
+<p class="evd-note">
+  EVIE also runs as an interactive terminal interface (<code>python -m evie</code>)
+  and as a local dashboard, and mirrors the same pipeline in MATLAB/Octave.
+  <span id="evdRepoLine"></span>
+</p>
+
+</article>
+
+
+
+<script>
+(function () {
+  'use strict';
+  const D = {{ evieDemo | dump | safe }};
+
+  /* REPO_URL: set this to the public repository URL when `evie` goes public.
+     See the front matter for the other two steps. */
+  const REPO_URL = null;
+
+  const css = n => getComputedStyle(document.documentElement)
+                     .getPropertyValue(n).trim();
+  const A = () => css('--color-accent-hover');
+  const A2 = () => css('--color-text-secondary');
+  const BORDER = () => css('--color-border');
+  const TXT = () => css('--color-text-primary');
+
+  const labels = [...new Set(D.samples.label)];
+  const COL = () => [A(), '#b07d4a'];
+
+  function fit(cv) {
+    const dpr = window.devicePixelRatio || 1;
+    const w = cv.clientWidth || 600, h = cv.height;
+    cv.width = w * dpr; cv.style.height = h + 'px';
+    cv.height = h * dpr;
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    return [ctx, w, h];
+  }
+
+  function legend(el, names, cols) {
+    el.innerHTML = names.map((n, i) =>
+      `<span><span class="k" style="background:${cols[i]}"></span>${n}</span>`
+    ).join('');
+  }
+
+  /* ---- traced boundaries ------------------------------------------------ */
+  function drawCurves() {
+    const cv = document.getElementById('evdCurves');
+    const [ctx, W, H] = fit(cv);
+    const cols = COL();
+    // frames are square and identical in size; lay them side by side
+    const frames = D.meta.frames;
+    const n = frames.length;
+    const pad = 8, cw = (W - pad * (n + 1)) / n;
+    const side = Math.min(cw, H - pad * 2);
+    frames.forEach((fr, i) => {
+      const x0 = pad + i * (cw + pad) + (cw - side) / 2;
+      const y0 = (H - side) / 2;
+      ctx.strokeStyle = BORDER(); ctx.lineWidth = 1;
+      ctx.strokeRect(x0, y0, side, side);
+      const sc = side / fr.width;
+      const ci = labels.indexOf(fr.label);
+      ctx.strokeStyle = cols[ci % cols.length];
+      ctx.lineWidth = 0.9;
+      ctx.globalAlpha = 0.85;
+      D.curves.filter(c => c.img === i).forEach(c => {
+        ctx.beginPath();
+        c.pts.forEach((p, j) => {
+          const x = x0 + p[0] * sc, y = y0 + p[1] * sc;
+          j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        });
+        ctx.closePath(); ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = A2();
+      ctx.font = '10px ' + css('--font-mono');
+      ctx.fillText(`${fr.label} · ${fr.n_shapes} shapes`, x0, y0 + side + 12);
+    });
+    legend(document.getElementById('evdCurvesLegend'), labels, cols);
+  }
+
+  /* ---- PGA spectrum ----------------------------------------------------- */
+  function drawSpec() {
+    const cv = document.getElementById('evdSpec');
+    const [ctx, W, H] = fit(cv);
+    const m = { l: 34, r: 10, t: 20, b: 22 };
+    const v = D.spectrum.slice(0, 60).map(s => Math.max(s, 1e-12));
+    const logs = v.map(Math.log10);
+    const lo = Math.min(...logs), span = Math.max(Math.max(...logs) - lo, 1e-6);
+    const iw = (W - m.l - m.r) / v.length;
+    ctx.strokeStyle = BORDER();
+    ctx.strokeRect(m.l, m.t, W - m.l - m.r, H - m.t - m.b);
+    v.forEach((s, i) => {
+      const h = Math.max(1, (H - m.t - m.b) * Math.max(0.02, (logs[i] - lo) / span));
+      ctx.fillStyle = i < D.meta.r ? A() : BORDER();
+      ctx.fillRect(m.l + i * iw, H - m.b - h, Math.max(1, iw * 0.7), h);
+    });
+    ctx.fillStyle = A2(); ctx.font = '9px ' + css('--font-mono');
+    ctx.fillText('σ (log)', 2, 10);
+    ctx.fillText(`k → (first ${v.length}; r = ${D.meta.r} retained)`, m.l, H - 6);
+  }
+
+  /* ---- distance scatter ------------------------------------------------- */
+  function drawScatter() {
+    const cv = document.getElementById('evdScatter');
+    const [ctx, W, H] = fit(cv);
+    const m = { l: 40, r: 10, t: 10, b: 26 };
+    const x = D.samples.dSPD, y = D.samples.dGr;
+    const xr = [Math.min(...x), Math.max(...x)], yr = [Math.min(...y), Math.max(...y)];
+    const sx = v => m.l + (v - xr[0]) / (xr[1] - xr[0] || 1) * (W - m.l - m.r);
+    const sy = v => H - m.b - (v - yr[0]) / (yr[1] - yr[0] || 1) * (H - m.t - m.b);
+    ctx.strokeStyle = BORDER();
+    ctx.strokeRect(m.l, m.t, W - m.l - m.r, H - m.t - m.b);
+    const cols = COL();
+    D.samples.label.forEach((l, i) => {
+      ctx.fillStyle = cols[labels.indexOf(l) % cols.length];
+      ctx.globalAlpha = 0.75;
+      ctx.beginPath(); ctx.arc(sx(x[i]), sy(y[i]), 2.6, 0, 7); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = A2(); ctx.font = '9px ' + css('--font-mono');
+    ctx.fillText('d_SPD  (scaling) →', m.l, H - 8);
+    ctx.save(); ctx.translate(10, H / 2 + 26); ctx.rotate(-Math.PI / 2);
+    ctx.fillText('d_Gr (undulation) →', 0, 0); ctx.restore();
+  }
+
+  /* ---- Karcher mean ----------------------------------------------------- */
+  function drawMean() {
+    const cv = document.getElementById('evdMean');
+    const [ctx, W, H] = fit(cv);
+    const all = [D.karcher.mean_shape, ...D.karcher.ensemble];
+    let xs = [], ys = [];
+    all.forEach(c => c.forEach(p => { xs.push(p[0]); ys.push(p[1]); }));
+    const xr = [Math.min(...xs), Math.max(...xs)], yr = [Math.min(...ys), Math.max(...ys)];
+    const pad = 14;
+    const s = Math.min((W - 2 * pad) / (xr[1] - xr[0] || 1),
+                       (H - 2 * pad) / (yr[1] - yr[0] || 1));
+    const cx = (xr[0] + xr[1]) / 2, cy = (yr[0] + yr[1]) / 2;
+    const px = v => W / 2 + (v - cx) * s, py = v => H / 2 - (v - cy) * s;
+    const poly = (c) => {
+      ctx.beginPath();
+      c.forEach((p, i) => i ? ctx.lineTo(px(p[0]), py(p[1]))
+                            : ctx.moveTo(px(p[0]), py(p[1])));
+      ctx.closePath();
+    };
+    ctx.strokeStyle = A2(); ctx.lineWidth = 1; ctx.globalAlpha = 0.16;
+    D.karcher.ensemble.forEach(c => { poly(c); ctx.stroke(); });
+    ctx.globalAlpha = 1;
+    poly(D.karcher.mean_shape);
+    ctx.fillStyle = css('--color-accent-dim'); ctx.fill();
+    ctx.strokeStyle = A(); ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = A2(); ctx.font = '9px ' + css('--font-mono');
+    ctx.fillText(`intrinsic mean over N = ${D.karcher.n_samples}`, 8, H - 7);
+  }
+
+  /* ---- decision landscape ----------------------------------------------- */
+  function drawDland() {
+    const cv = document.getElementById('evdDland');
+    const [ctx, W, H] = fit(cv);
+    const dec = D.decisions;
+    const R = dec.r_vals, N = dec.nre_vals, t = 0;      // gr channel
+    const m = { l: 40, r: 12, t: 12, b: 26 };
+    const cw = (W - m.l - m.r) / R.length, ch = (H - m.t - m.b) / N.length;
+    ctx.font = '9px ' + css('--font-mono');
+    for (let i = 0; i < R.length; i++) {
+      for (let j = 0; j < N.length; j++) {
+        const x = m.l + i * cw, y = m.t + j * ch;
+        ctx.strokeStyle = BORDER(); ctx.strokeRect(x, y, cw, ch);
+        const accept = dec.rslt[i][j][t] === 1;
+        const mx = x + cw / 2, my = y + ch / 2;
+        ctx.strokeStyle = accept ? A() : '#b0553f'; ctx.lineWidth = 1.8;
+        if (accept) { ctx.beginPath(); ctx.arc(mx, my, 7, 0, 7); ctx.stroke(); }
+        else {
+          ctx.beginPath();
+          ctx.moveTo(mx - 6, my - 6); ctx.lineTo(mx + 6, my + 6);
+          ctx.moveTo(mx + 6, my - 6); ctx.lineTo(mx - 6, my + 6); ctx.stroke();
+        }
+      }
+    }
+    ctx.fillStyle = A2();
+    R.forEach((r, i) => ctx.fillText(`r=${r}`, m.l + i * cw + 6, H - 10));
+    N.forEach((n, j) => ctx.fillText(String(n), 6, m.t + j * ch + ch / 2 + 3));
+    ctx.fillText('n_re', 6, m.t - 3);
+  }
+
+  /* ---- scale sweep ------------------------------------------------------ */
+  function drawSweep() {
+    const cv = document.getElementById('evdSweep');
+    const [ctx, W, H] = fit(cv);
+    const sw = D.sweep;
+    const m = { l: 52, r: 14, t: 14, b: 30 };
+    const nS = sw.scale_vals.length, nT = sw.tests.length;
+    const cw = (W - m.l - m.r) / nS, ch = (H - m.t - m.b) / nT;
+    ctx.font = '10px ' + css('--font-mono');
+    for (let i = 0; i < nS; i++) {
+      for (let j = 0; j < nT; j++) {
+        const rej = sw.rejects[i][j], tot = sw.totals[i][j];
+        const frac = tot ? rej / tot : 0;
+        const x = m.l + i * cw, y = m.t + j * ch;
+        ctx.fillStyle = frac > 0 ? '#b0553f' : css('--color-accent-dim');
+        ctx.globalAlpha = frac > 0 ? 0.30 + 0.55 * frac : 0.55;
+        ctx.fillRect(x, y, cw, ch);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = BORDER(); ctx.strokeRect(x, y, cw, ch);
+        ctx.fillStyle = TXT();
+        ctx.fillText(`${rej}/${tot} reject`, x + 10, y + ch / 2 + 4);
+      }
+    }
+    ctx.fillStyle = A2();
+    sw.scale_vals.forEach((s, i) =>
+      ctx.fillText(`scale ${s}`, m.l + i * cw + 10, H - 12));
+    sw.tests.forEach((t, j) => {
+      const nm = t === 'gr' ? 'undulation' : 'scaling';
+      ctx.fillText(nm, 2, m.t + j * ch + ch / 2 + 4);
+    });
+    legend(document.getElementById('evdSweepLegend'),
+           ['fail to reject H₀', 'reject H₀'],
+           [css('--color-accent-dim'), '#b0553f']);
+  }
+
+  /* ---- prose driven by the real numbers --------------------------------- */
+  function fillText() {
+    const counts = {};
+    D.samples.label.forEach(l => counts[l] = (counts[l] || 0) + 1);
+    document.getElementById('evdN1').textContent = counts[labels[0]];
+    document.getElementById('evdN2').textContent = counts[labels[1]];
+
+    const dec = D.decisions;
+    let acc = 0, tot = 0;
+    dec.rslt.forEach(a => a.forEach(b => b.forEach(v => { tot++; if (v === 1) acc++; })));
+    document.getElementById('evdVerdict').textContent =
+      `Across every point of the analysis grid — ${dec.r_vals.length} values of r, ` +
+      `${dec.nre_vals.length} landmark counts, both factors, ${tot} tests in all — ` +
+      `the test fails to reject the null in ${acc} of ${tot}. At this smoothing ` +
+      `scale the two days are statistically indistinguishable in both shape factors.`;
+
+    const sw = D.sweep;
+    const hits = [];
+    sw.scale_vals.forEach((s, i) => sw.tests.forEach((t, j) => {
+      if (sw.rejects[i][j] > 0) hits.push(
+        `at scale ${s} the ${t === 'gr' ? 'undulation' : 'scaling'} factor ` +
+        `rejects in ${sw.rejects[i][j]} of ${sw.totals[i][j]} tests`);
+    }));
+    document.getElementById('evdSweepText').textContent = hits.length
+      ? `The decision is not constant across scale: ${hits.join('; ')} — while ` +
+        `every other scale accepts throughout. A result that survives only at ` +
+        `one smoothing scale is a different claim from one that holds across all ` +
+        `of them, and the sweep is what tells the two apart.`
+      : `The decision is constant across every smoothing scale tested.`;
+
+    document.getElementById('evdRepoLine').innerHTML = REPO_URL
+      ? `Source and documentation: <a href="${REPO_URL}">${REPO_URL}</a>.`
+      : `The source repository is being prepared for public release.`;
+  }
+
+  function drawAll() {
+    drawCurves(); drawSpec(); drawScatter();
+    drawMean(); drawDland(); drawSweep();
+  }
+
+  fillText();
+  drawAll();
+  addEventListener('resize', drawAll);
+  const themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) themeBtn.addEventListener('click', () => setTimeout(drawAll, 60));
+})();
+</script>
