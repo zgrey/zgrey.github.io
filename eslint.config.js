@@ -38,4 +38,15 @@ export default [
       globals: globals.node,
     },
   },
+  {
+    // Build/CI tooling run by npm scripts, in Node as ESM. Needs a newer
+    // ecmaVersion than the browser code: audit-gate.mjs uses `catch {}` without
+    // a binding (ES2019) and `??` (ES2020).
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: globals.node,
+    },
+  },
 ];

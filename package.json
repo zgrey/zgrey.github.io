@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "npx @11ty/eleventy --serve",
     "build": "npx @11ty/eleventy",
-    "audit": "npm audit --audit-level=high",
+    "audit": "node scripts/audit-gate.mjs",
     "lint": "eslint .",
     "html-validate": "html-validate \"_site/**/*.html\"",
     "gitleaks": "gitleaks detect --source . --redact --report-path=gitleaks-report.json"
@@ -21,7 +21,8 @@
   "comments": {
     "js-yaml": "gray-matter@4.0.3 pins js-yaml ^3.13.1; we override it to 4.x to patch CVE-2026-53550 (GHSA-h67p-54hq-rp68) and GHSA-52cp-r559-cp3m, AND set a js-yaml 4.x front-matter engine in eleventy.config.js (gray-matter's default calls the removed safeLoad). Floor raised to 4.3.1 for GHSA-5p4m-2wfm-xmqj (quadratic CPU in !!omap resolution, affects 4.0.0-4.3.0); staying on 4.x rather than 5.x because the eleventy.config.js front-matter engine targets the 4.x API.",
     "@11ty/recursive-copy": "eleventy 3.1.6 pins ^4.0.4, which depends on minimatch 3.x -> brace-expansion 1.x, still vulnerable to GHSA-mh99-v99m-4gvg (fixed only in brace-expansion >=5.0.8). recursive-copy 5.0.2 uses minimatch ^10.2.4. Drop this override once eleventy ships a release depending on recursive-copy >=5.",
-    "brace-expansion": "eslint 10.x -> minimatch 10.x resolves brace-expansion 5.0.8, which bypasses the GHSA-mh99-v99m-4gvg mitigation (GHSA-rgw5-rvv9-x895, DoS via unbounded intermediate arrays). Fixed in 5.0.9."
+    "brace-expansion": "eslint 10.x -> minimatch 10.x resolves brace-expansion 5.0.8, which bypasses the GHSA-mh99-v99m-4gvg mitigation (GHSA-rgw5-rvv9-x895, DoS via unbounded intermediate arrays). Fixed in 5.0.9.",
+    "braces": "braces <=3.0.3 is vulnerable to GHSA-vfj7-8cjw-p6xm (CVE-2026-93687, stack-exhaustion DoS, CVSS 8.7) and has NO patched release: 3.0.3 is the latest version and the advisory covers everything up to it, so there is no override to write. Its only consumer here is chokidar 3.6.0, pinned ^3.6.0 by @11ty/eleventy 3.1.6 and @11ty/eleventy-dev-server, and loaded only by Eleventy's --watch/--serve path. Overriding chokidar to >=4 strips braces but silently breaks `npm run dev`, because chokidar 4 dropped glob support and every Eleventy watch target is a glob. The advisory is therefore recorded as a documented, expiring exception in audit-allowlist.json and enforced by scripts/audit-gate.mjs; it clears when Eleventy 4 (which depends on chokidar ^5) ships stable."
   },
   "overrides": {
     "js-yaml": "^4.3.1",
