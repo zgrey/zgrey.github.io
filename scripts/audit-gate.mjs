@@ -121,12 +121,34 @@ for (const entry of entries) {
   if (!found.has(entry.advisory)) stale.push(entry);
 }
 
+// Cross-check the per-advisory parse above against npm's own summary counts.
+// Everything above reads `vulnerabilities[*].via`; if npm ever reshaped that,
+// the parse would find nothing and -- with an empty allowlist, so no stale
+// entry to trip -- the gate would pass a vulnerable tree. npm's summary is a
+// separate field, so disagreement between the two means the parse is wrong.
+// Missing counts fail too: with nothing to compare against, the check can't run.
+const counts = report.metadata?.vulnerabilities;
+const unparsed = [];
+if (!counts || typeof counts.high !== "number" || typeof counts.critical !== "number") {
+  unparsed.push("npm audit returned no metadata.vulnerabilities summary to cross-check against");
+} else if (counts.high + counts.critical > 0) {
+  const parsedAtThreshold = [...found.values()].filter(
+    (a) => RANK[a.severity] === undefined || RANK[a.severity] >= THRESHOLD,
+  );
+  if (parsedAtThreshold.length === 0) {
+    unparsed.push(
+      `npm reports ${counts.critical} critical and ${counts.high} high, ` +
+        `but no advisory at that severity could be read from the report`,
+    );
+  }
+}
+
 const plural = (n, word, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
-const counts = report.metadata?.vulnerabilities ?? {};
+const summary = counts ?? {};
 console.log(
-  `audit-gate: npm audit reports ${plural(counts.total ?? 0, "vulnerability", "vulnerabilities")} ` +
-    `(${counts.critical ?? 0} critical, ${counts.high ?? 0} high, ` +
-    `${counts.moderate ?? 0} moderate, ${counts.low ?? 0} low), ` +
+  `audit-gate: npm audit reports ${plural(summary.total ?? 0, "vulnerability", "vulnerabilities")} ` +
+    `(${summary.critical ?? 0} critical, ${summary.high ?? 0} high, ` +
+    `${summary.moderate ?? 0} moderate, ${summary.low ?? 0} low), ` +
     `${plural(found.size, "distinct advisory", "distinct advisories")}.`,
 );
 
@@ -162,10 +184,19 @@ for (const entry of stale) {
   );
 }
 
-if (blocking.length || expired.length || stale.length) {
+for (const problem of unparsed) {
+  console.error(
+    `\n  UNPARSED  ${problem}.` +
+      `\n            The npm audit JSON format may have changed; run \`npm audit\` to see` +
+      `\n            the findings, and update scripts/audit-gate.mjs before trusting it.`,
+  );
+}
+
+if (blocking.length || expired.length || stale.length || unparsed.length) {
   console.error(
     `\naudit-gate: FAILED -- ${plural(blocking.length, "blocking advisory", "blocking advisories")}, ` +
-      `${plural(expired.length, "expired exception")}, ${plural(stale.length, "stale exception")}.`,
+      `${plural(expired.length, "expired exception")}, ${plural(stale.length, "stale exception")}` +
+      `${unparsed.length ? ", and a report the gate could not read" : ""}.`,
   );
   process.exit(1);
 }

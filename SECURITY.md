@@ -23,14 +23,20 @@ advisories listed in `audit-allowlist.json` are reported and tolerated. An entry
 only ever legitimate when **upstream has no patched version**; anything fixable gets a
 version bump or an `overrides` entry instead, as every previous advisory in this repo did.
 
-The allowlist is deliberately self-cleaning, which is why this is a 150-line script and not
+The allowlist is deliberately self-cleaning, which is why this is a small script and not
 a looser `--audit-level=critical`. The gate fails if an entry is past its `expires` date
 (forcing a re-review) and *also* if an entry no longer matches anything `npm audit` reports
 (forcing its removal once upstream ships a fix). An exception cannot quietly outlive the
 problem it was written for. `advisory`, `reason` and `expires` are all required on an entry;
 a missing or malformed `expires` blocks the build rather than being waved through, as does an
-advisory whose severity the gate does not recognize. The failure modes — blocking, expired,
-stale, malformed — are each exercised by hand before shipping a change to the gate.
+advisory whose severity the gate does not recognize. The gate also cross-checks its own parse
+against npm's summary counts (`metadata.vulnerabilities`): if npm reports high or critical
+findings that the gate could not read as advisories — say, because npm reshaped its JSON — it
+fails as `UNPARSED` instead of passing a vulnerable tree. Without this, a format change would
+pass silently once the allowlist is empty, since there would be no stale entry left to trip.
+The failure modes — blocking, expired, stale, malformed, unparsed — are each exercised by hand
+before shipping a change to the gate; the unparsed case needs a stub `npm` on `PATH` that
+emits a reshaped copy of a real report.
 
 **Currently accepted: one advisory.**
 
