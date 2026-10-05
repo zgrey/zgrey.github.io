@@ -1,0 +1,22 @@
+{
+  "comment": [
+    "Advisories that may not fail the build, checked by scripts/audit-gate.mjs.",
+    "An entry is only legitimate when there is NO patched version available upstream.",
+    "If a fix exists, upgrade or add a package.json override instead of listing it here.",
+    "`advisory` (the GHSA id), `reason` and `expires` (YYYY-MM-DD) are all required:",
+    "an entry with a missing or malformed `expires` blocks the build rather than",
+    "being waved through. The gate also fails when an entry is past its expiry OR no",
+    "longer matches a reported advisory, so an exception cannot silently outlive the",
+    "problem it was written for."
+  ],
+  "allow": [
+    {
+      "advisory": "GHSA-vfj7-8cjw-p6xm",
+      "cve": "CVE-2026-93687",
+      "package": "braces",
+      "severity": "high",
+      "expires": "2027-01-05",
+      "reason": "Stack-exhaustion DoS via deeply nested brace patterns. Patched versions: NONE -- braces 3.0.3 is the latest release (published 2024-09-18) and the advisory covers <=3.0.3, so there is nothing to upgrade to. Reachable here only through chokidar 3.6.0, which Eleventy 3.1.6 and @11ty/eleventy-dev-server pin at ^3.6.0 and which is the sole consumer of braces in the tree. chokidar is dynamically imported only by Eleventy's watch()/--serve path: `npm run build` and `npm run html-validate` both pass with node_modules/braces deleted, so nothing in CI or in the deployed site loads it. The brace patterns it expands are authored by Eleventy itself (./src/**/*.{njk,md} and friends) -- flat, two-to-four alternates, never attacker-supplied. Overriding chokidar to 4.x or 5.x removes braces but silently breaks the dev server: chokidar >=4 dropped glob support, so every one of Eleventy's watch targets and ignore patterns matches nothing and `npm run dev` stops rebuilding with no error. Exit path: Eleventy 4.x depends on chokidar ^5.0.0, so this clears when Eleventy 4 ships stable; until then it is canary-only (4.0.0-alpha.10) and not a reasonable pin for a live site."
+    }
+  ]
+}

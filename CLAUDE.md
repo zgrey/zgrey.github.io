@@ -8,7 +8,8 @@ Eleventy 3.x static site for [zgrey.github.io](https://zgrey.github.io). Source 
 
 - `npm run dev` -- local dev server at localhost:8080
 - `npm run build` -- production build to `_site/`
-- `npm run audit` -- run npm audit (high severity)
+- `npm run audit` -- dependency audit gate (`scripts/audit-gate.mjs`): high severity, minus
+  documented exceptions in `audit-allowlist.json`
 - `npm run lint` -- lint code with ESLint 10 (flat config, `eslint.config.js`)
 - `npm run html-validate` -- validate generated HTML
 - `npm run gitleaks` -- scan repository for secrets (requires gitleaks binary locally)
@@ -18,7 +19,8 @@ Eleventy 3.x static site for [zgrey.github.io](https://zgrey.github.io). Source 
 The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on every push and PR to `main`:
 
 1. `npm ci` -- deterministic install from lock file
-2. `npm run audit` -- fails on high-severity vulnerabilities
+2. `npm run audit` -- fails on high-severity vulnerabilities outside `audit-allowlist.json`,
+   and on allowlist entries that have expired or gone stale
 3. `npm run lint` -- ESLint 10 flat config (`@eslint/js` recommended)
 4. `gitleaks/gitleaks-action@v2` -- official Gitleaks GitHub Action for secret scanning
 5. `npm run build` -- Eleventy static site generation
