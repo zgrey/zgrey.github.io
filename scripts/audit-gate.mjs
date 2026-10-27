@@ -25,7 +25,11 @@ const allowlistPath = resolve(repoRoot, "audit-allowlist.json");
 
 // `npm audit` exits non-zero whenever it finds anything, so a non-zero status is
 // not an error in itself -- but unparseable output is, and must never pass.
-const run = spawnSync("npm", ["audit", "--json"], {
+// The shell is what resolves npm to its npm.cmd shim on Windows; spawning "npm"
+// directly fails there with ENOENT. The command is a constant, so passing it as
+// one string (rather than with an args array, deprecated under shell) is safe.
+const run = spawnSync("npm audit --json", {
+  shell: true,
   cwd: repoRoot,
   encoding: "utf8",
   maxBuffer: 64 * 1024 * 1024,
