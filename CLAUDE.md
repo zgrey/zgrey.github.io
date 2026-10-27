@@ -18,7 +18,7 @@ Eleventy 3.x static site for [zgrey.github.io](https://zgrey.github.io). Source 
 
 The GitHub Actions workflow (`.github/workflows/deploy.yml`) runs on every push and PR to `main`:
 
-1. `npm ci` -- deterministic install from lock file
+1. `npm ci --ignore-scripts` -- deterministic install from lock file, no dependency install scripts
 2. `npm run audit` -- fails on high-severity vulnerabilities outside `audit-allowlist.json`,
    and on allowlist entries that have expired or gone stale
 3. `npm run lint` -- ESLint 10 flat config (`@eslint/js` recommended)

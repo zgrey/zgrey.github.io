@@ -7,10 +7,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Workflow default: read-only. The Pages write and OIDC grants are given to the
+# deploy job alone, so the build job -- which runs third-party npm packages, on
+# PR branches as well as main -- never holds a token that can publish the site.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
@@ -32,7 +33,10 @@ jobs:
           node-version: 24
           cache: npm
 
-      - run: npm ci
+      # No package in the tree needs an install script (the only one, fsevents,
+      # is macOS-only and never installed here), so refuse to run any: a
+      # compromised dependency's postinstall is the usual supply-chain vector.
+      - run: npm ci --ignore-scripts
 
       # --- Security checks ---
       - name: Dependency audit (high severity)
@@ -61,6 +65,9 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write      # publish the Pages artifact
+      id-token: write   # OIDC token deploy-pages exchanges for that publish
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
