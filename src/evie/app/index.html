@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EVIE Dashboard</title>
+<link rel="stylesheet" href="tokens.css?v=30544ea2afdd">
+</head>
+<body>
+
+<div class="app">
+  <header class="hdr">
+    <span class="hdr-brand">EVIE</span><span class="hdr-ver">v2.1.0</span>
+    <span class="hdr-sep">│</span>
+    <span class="hdr-ds" id="hdrDs">data/sun/</span>
+    <div class="hdr-stages" id="stageRun" aria-label="Pipeline stage">
+      <div class="stage-line done"><span class="st-mark">✓</span>import &amp; segment</div>
+      <span class="st-sep">›</span>
+      <div class="stage-line done"><span class="st-mark">✓</span>preview accepted</div>
+      <span class="st-sep">›</span>
+      <div class="stage-line active"><span class="st-mark">●</span>SRQD<span class="st-pct" id="stPct">32%</span>
+        <div class="pbar"><div id="pbar"></div></div>
+      </div>
+      <span class="st-sep">›</span>
+      <div class="stage-line"><span class="st-mark">·</span>PGA — Gr(2,n) × SPD(2)</div>
+      <span class="st-sep">›</span>
+      <div class="stage-line"><span class="st-mark">·</span>reconstruct &amp; cluster</div>
+    </div>
+    <div class="hdr-chips">
+      <span class="chip live" id="modeChip"><span class="dot pulse"></span>g2image · stage 3/5</span>
+      <span class="chip" id="segChip">morph · scale 5</span>
+      <button class="theme-toggle" id="themeBtn" aria-label="Switch theme">light</button>
+      <button class="hdr-quit" id="quitBtn" title="Cancel any run and shut down the dashboard" aria-label="Quit dashboard">⏻ quit</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <nav class="side" aria-label="Workflows, datasets and run state">
+      <div class="side-sec">
+        <h3>Workflows</h3>
+        <button class="side-item active" id="wfG2">G2Image<small>shape analysis pipeline</small></button>
+        <button class="side-item" id="wfMMD">mmdG2Image<small>two-sample MMD test</small></button>
+      </div>
+      <!-- Both lists are filled by loadSessions() / loadDatasets() from the API.
+           They open EMPTY on purpose: hardcoded sample rows used to sit here, and
+           because each loader awaits its fetch before clearing the section, a
+           failed request left those samples on screen looking like real entries
+           that could not be clicked. A loading line can only ever be stale for
+           as long as the request takes. -->
+      <div class="side-sec" id="sessSec">
+        <h3>Sessions</h3>
+        <p class="side-note">loading…</p>
+      </div>
+      <div class="side-sec" id="dsSec">
+        <h3>Datasets</h3>
+        <p class="side-note">loading…</p>
+      </div>
+      <div class="card" id="paramCard">
+        <h3>Parameters</h3>
+        <div class="kv"><span class="k">method</span><span class="v">morph</span></div>
+        <div class="kv"><span class="k">scale</span><span class="v">5</span></div>
+        <div class="kv"><span class="k">min_arc</span><span class="v">5</span></div>
+        <div class="kv"><span class="k">tol_int</span><span class="v">1e-8</span></div>
+        <div class="kv"><span class="k">r</span><span class="v" id="pR">150</span></div>
+        <div class="kv"><span class="k">n_re</span><span class="v">1000</span></div>
+        <div class="kv"><span class="k">spline</span><span class="v">periodic</span></div>
+        <div class="kv"><span class="k">cut locus</span><span class="v">off</span></div>
+      </div>
+      <button class="cancel">✕ cancel stage</button>
+      <p class="side-note">The solid green line in the PGA spectrum / RMSE tiles is the run's dimensionality (locked). Drag a probe line off it to re-render <b>pinned shape cards</b> at any r′ in real time. Click a shape to pin it.</p>
+    </nav>
+
+    <div class="sidesplit" id="sidesplit" title="drag to resize sidebar · double-click to reset"></div>
+
+    <section class="center" aria-label="Visualization">
+      <div class="viz-head">
+        <span class="lbl">view</span>
+        <div class="segctl" id="viewCtl" role="tablist">
+          <button data-view="raw">raw</button>
+          <button data-view="seg" class="on">segmented</button>
+          <button data-view="sst" id="sstBtn">sst r=150</button>
+          <button data-view="fill">fills</button>
+        </div>
+        <select class="mini-sel" id="fillBy" hidden aria-label="Color fills by">
+          <option value="dProd">color: d_Prod</option>
+        </select>
+        <select class="mini-sel" id="cmapSel" hidden aria-label="Colormap"
+                title="Colormap — sequential for distances, diverging for witness, categorical for clusters"></select>
+        <span class="clust-ctl" id="clustCtl" hidden>
+          <span class="lbl">clusters over</span>
+          <select class="mini-sel" id="clustBasis" aria-label="Cluster over" title="Feature the clustering runs on">
+            <option value="joint">d_Gr,d_SPD</option>
+            <option value="spd">d_SPD</option>
+            <option value="gr">d_Gr</option>
+            <option value="T">T (&#8804;r)</option>
+            <option value="S">S</option>
+          </select>
+          <select class="mini-sel" id="clustMethod" aria-label="Clustering method"
+                  title="Clustering algorithm"></select>
+          <button class="kstep" id="clustDocs" type="button"
+                  aria-label="About this clustering method"
+                  title="What this method does, and what it assumes">?</button>
+          <button class="kstep" id="kDown" type="button" aria-label="Fewer clusters">−</button>
+          <span id="kVal" aria-live="polite">4</span>
+          <button class="kstep" id="kUp" type="button" aria-label="More clusters">+</button>
+          <span class="clust-legend" id="clustLegend" aria-label="Cluster colors"></span>
+        </span>
+        <span class="clust-ctl" id="witCtl" hidden>
+          <span class="lbl">witness</span>
+          <button class="wtog on" id="witGr" type="button" aria-label="Grassmannian witness">gr</button>
+          <button class="wtog" id="witSpd" type="button" aria-label="SPD witness">spd</button>
+        </span>
+        <div class="right">
+          <span class="lbl">plots</span>
+          <select class="mini-sel" id="addPlot" aria-label="Add supplemental plot"></select>
+          <button class="supp-fold" id="suppFoldBtn" title="Minimize / restore the plot row" aria-label="Minimize plots">▾</button>
+        </div>
+      </div>
+
+      <div class="img-row" id="stageWrap"></div>
+      <div class="vsplit" id="vsplit" title="drag to resize plot row"></div>
+      <div class="supp-row" id="suppRow" style="height:236px"></div>
+    </section>
+  </div>
+
+  <div class="term" id="term">
+    <div class="term-head" id="termHead">
+      <h2>evie terminal</h2>
+      <span class="hint">type <b>help</b> · Enter to run · ↑↓ history · click bar to fold</span>
+      <button class="fold" id="growBtn" aria-label="Expand terminal" title="Expand / shrink the terminal">⤢</button>
+      <button class="fold" id="foldBtn" aria-label="Fold terminal">▾</button>
+    </div>
+    <div class="term-body">
+      <div class="term-scroll" id="termScroll" aria-live="polite"></div>
+      <div class="log-col">
+        <div class="log-cap"><h3>pipeline log</h3></div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+    <div class="term-input">
+      <span class="pfx">evie&gt;</span>
+      <input id="termIn" type="text" placeholder="type help — or run, cancel, save, clear (↑ for history)" autocomplete="off" spellcheck="false">
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script src="static-api.js?v=2f8b01fbd49d" data-build="8c951c907f94"></script>
+<script src="app.js?v=3dbe5c348aa1"></script>
+</body>
+</html>

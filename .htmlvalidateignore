@@ -1,0 +1,3 @@
+# The EVIE dashboard: generated from TDA-SST (make_web_demo.py), where its
+# markup is written and tested. Validating it here would mean editing a copy.
+_site/evie/app/

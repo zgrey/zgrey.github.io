@@ -514,9 +514,23 @@ a:hover, a:focus {
   margin-bottom: 0.6rem;
 }
 
-/* ===== EVIE Chat Interface ===== */
+/* ===== EVIE =====
+   The page frames the real dashboard (src/evie/app/, generated) at full width.
+   Styles live here rather than in a page stylesheet because router.js swaps
+   only <main>: a page's own <link> would never load on in-site navigation. */
+.evie-page main { padding-bottom: 2rem; }
+
+.page-content.evie-intro,
+.page-content.evie-foot,
+.page-content.evie-narrow {
+  max-width: 64rem;
+  min-height: 0;
+}
+
+.page-content.evie-intro { padding-bottom: 1.25rem; }
+
 .evie-header {
-  padding: 1rem 1.5rem;
+  padding: 0 0 1rem;
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
@@ -535,17 +549,87 @@ a:hover, a:focus {
 
 .evie-header-dog:hover .dog-img { opacity: 1; filter: brightness(1.4); }
 
-.ev... (placeholder)
-
-.evie-header h2 {
+.evie-header h1 {
   margin: 0;
-  font-size: 1rem;
 }
 
 .evie-header .evie-subtitle {
   color: var(--color-text-secondary);
   font-size: 0.75rem;
   margin-top: 0.25rem;
+}
+
+.evie-soon {
+  border-left: 3px solid var(--color-accent-hover);
+  background: var(--color-bg-secondary);
+  padding: 0.9rem 1rem;
+  margin: 1.25rem 0 0.9rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.evie-soon strong {
+  color: var(--color-text-heading);
+  letter-spacing: 0.08em;
+  margin-right: 0.35rem;
+}
+
+.evie-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.evie-stage {
+  position: relative;
+  z-index: 1;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.evie-stage iframe {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 4rem);
+  min-height: 40rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+}
+
+.page-content.evie-foot {
+  padding-top: 1rem;
+  padding-bottom: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.evie-credit {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.evie-full {
+  flex: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+
+.evie-full:hover { border-color: var(--color-accent-hover); }
+
+/* The dashboard is a desktop tool; below its working width, say so rather
+   than load it into a space it cannot use. */
+.evie-narrow { display: none; }
+
+@media (max-width: 900px) {
+  .evie-stage, .evie-full { display: none; }
+  .page-content.evie-narrow { display: block; }
 }
 
 
