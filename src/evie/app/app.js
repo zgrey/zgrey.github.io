@@ -933,6 +933,11 @@ const PLOTS={
   whist:{title:'Witness distribution', meta:()=>'per-ensemble histogram', draw:drawWhist, mmdOnly:true},
   ssweep:{title:'Scale sweep', meta:()=>'ambiguity over scales', draw:drawSsweep, bind:bindSsweep, mmdOnly:true},
 };
+/* A plot type from outside the code (the #plots= hash, a <select> value) as
+   its canonical PLOTS key, or null. Own keys only: `PLOTS[t]` alone also
+   admits inherited names, and #plots=constructor then crashed the panel
+   builder on a missing meta(). */
+const plotKey = t => Object.keys(PLOTS).find(k => k===t) || null;
 let suppList=['spec','pga'];
 let suppFolded=false;   /* 6b: plot row minimized (terminal-fold idiom) */
 const suppFlex={};
@@ -955,7 +960,7 @@ function renderSupp(){
     p.className='panel'; p.dataset.plot=type;
     p.style.flexGrow=suppFlex[type]||1;
     p.innerHTML=`<div class="panel-head"><h2>${PLOTS[type].title}</h2>${PLOTS[type].headExtra||''}<span class="meta">${PLOTS[type].meta()}</span><button class="close" aria-label="Remove plot" title="remove">✕</button></div>
-                 <div class="panel-body"><canvas id="c_${type}"></canvas></div>`;
+                 <div class="panel-body"><canvas id="c_${esc(type)}"></canvas></div>`;
     p.querySelector('.close').addEventListener('click',()=>{
       suppList=suppList.filter(t=>t!==type); renderSupp();
     });
@@ -977,7 +982,8 @@ function refreshAddOptions(){
   sel.disabled=avail.length===0;
 }
 document.getElementById('addPlot').addEventListener('change',e=>{
-  if (e.target.value){ suppList.push(e.target.value); setSuppFold(false); }
+  const t=plotKey(e.target.value);
+  if (t){ suppList.push(t); setSuppFold(false); }
 });
 { const b=document.getElementById('suppFoldBtn');
   if (b) b.addEventListener('click', ()=>setSuppFold(!suppFolded)); }
@@ -1178,7 +1184,7 @@ function toolAct(act,cvId,btn){
     const wf=S.mode==='g2'?'g2image':'mmdg2image';
     termEcho(`run ${wf} sub_reg=${subRegOf(cr)}`,
              `      queued re-segmentation on cropped sub-region · preview opens on completion`);
-    logLine(`<span class="okm">✓</span>sub_reg ${subRegOf(cr)} queued for rerun (${keyFor(cvId)})`);
+    logLine(`<span class="okm">✓</span>sub_reg ${subRegOf(cr)} queued for rerun (${esc(keyFor(cvId))})`);
     cropRect[cvId]=null; updateCropUI(cvId);
     return;
   }
@@ -1383,7 +1389,7 @@ function bindImg(cvId){
       drawImg(cvId); drawSct(); drawPGA();
     }
     if (hit && o){
-      showTip(sampleTip(o, {id: sample+1, head: ` · ${key}`,
+      showTip(sampleTip(o, {id: sample+1, head: ` · ${esc(key)}`,
                             hint: '<br><i>click to pin</i>'}),
               e.clientX, e.clientY);
     } else hideTip();
@@ -1855,7 +1861,7 @@ document.addEventListener('keydown',e=>{
 /* ---------- init ---------- */
 setFillOptions();
 const plotsTok=hashOpt('plots');
-if (plotsTok) suppList=plotsTok.split('+').filter(t=>PLOTS[t]);
+if (plotsTok) suppList=plotsTok.split('+').map(plotKey).filter(Boolean);
 if (hashFlag('suppfold')) setSuppFold(true);   // headless smoke: minimized plots
 if (hashFlag('mmd')) setMode('mmd'); else { buildStage(); renderSupp(); }
 if (hashFlag('clust')){
@@ -2575,7 +2581,12 @@ if (LIVE) (function(){
     mmdg2image:['import_segment','mmd'],
   };
   const stageRun = document.getElementById('stageRun');   // top-banner runner
-  const stageEls = {};
+  /* Stage names arrive in engine events. Keep the table prototype-free and
+     read it through own keys only, so a name like "__proto__" can neither
+     read nor write Object.prototype. */
+  const stageEls = Object.create(null);
+  const own = (o, k)=> Object.prototype.hasOwnProperty.call(o, k);
+  const stageLine = (s)=> own(stageEls, s) ? stageEls[s] : null;
   function buildStageHUD(workflow){
     stageRun.innerHTML='';
     for (const k in stageEls) delete stageEls[k];   // drop nodes of the previous workflow
@@ -2592,7 +2603,7 @@ if (LIVE) (function(){
     stageRun.hidden=false;
   }
   function stageStart(s){
-    if (!stageEls[s] && STAGE_LABEL[s]){
+    if (!stageLine(s) && own(STAGE_LABEL, s)){
       // optional stage not in the workflow's static sequence (e.g. the
       // scale sweep, which only runs when the spec carries scales)
       if (stageRun.children.length)
@@ -2613,14 +2624,14 @@ if (LIVE) (function(){
     }
   }
   function stageProgress(s, done, total){
-    const line=stageEls[s]; if(!line) return;
+    const line=stageLine(s); if(!line) return;
     const pct = total>0 ? Math.round(done/total*100) : 0;
     const pc=line.querySelector('.st-pct'), bar=line.querySelector('.pbar');
     pc.style.display=''; pc.textContent=pct+'%';
     bar.style.display=''; bar.firstElementChild.style.width=pct+'%';
   }
   function stageDone(s){
-    const line=stageEls[s]; if(!line) return;
+    const line=stageLine(s); if(!line) return;
     line.className='stage-line done';
     line.querySelector('.st-mark').textContent='✓';
     const pc=line.querySelector('.st-pct'), bar=line.querySelector('.pbar');
@@ -2681,7 +2692,7 @@ if (LIVE) (function(){
     setPills(false);
     setLoading('#stageWrap', true);
     setLoading('#suppRow', true);
-    chipState(`${ev.workflow} · running`, true);
+    chipState(`${esc(ev.workflow)} · running`, true);
     startStageLine(`run started (${ev.workflow})`);
     resetCancelState();   // a fresh run is not carrying a stale cancel
     refreshActBtn();
@@ -2719,9 +2730,9 @@ if (LIVE) (function(){
       setPills(true);
       persistSavedSetSeg();   // the set remembers how it was just analysed
     }
-    else if (kind==='RunFailed'){ chipState(`✕ ${curWorkflow} · failed`, false);
+    else if (kind==='RunFailed'){ chipState(`✕ ${esc(curWorkflow)} · failed`, false);
       llog('err', ev.error||'run failed'); }
-    else { chipState(`${curWorkflow} · cancelled`, false);
+    else { chipState(`${esc(curWorkflow)} · cancelled`, false);
       hasResults = LIVEIMG.ready || LIVEDATA.ready;   // partial results kept
       llog('warn', 'run cancelled'+(hasResults?' — partial results kept':'')); }
     refreshActBtn();
