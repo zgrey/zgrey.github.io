@@ -119,6 +119,9 @@ is the real test, and if it fails Pages keeps serving the last good deploy.
   updates only; scheduled *version* updates are not configured. Adding that file is the
   remaining half of the story if you want routine bumps rather than only advisory-driven ones.
 - **CodeQL** code scanning, via default setup (see above).
+- **Secret scanning and push protection**, enabled 2026-10-27 and confirmed through the API
+  (`security_and_analysis`). Push protection blocks a secret at `git push`, which Gitleaks in CI
+  cannot do; it only reports after the fact.
 
 ## Recommendations for Further Hardening
 
@@ -133,13 +136,12 @@ is the real test, and if it fails Pages keeps serving the last good deploy.
   `'unsafe-inline'`, which would defeat much of the point. KaTeX also writes inline `style`
   attributes on the elements it renders, so `style-src` will need `'unsafe-inline'` regardless.
   That is the usual compromise; inline styles are a far smaller hole than inline scripts.
+  `/evie/` frames the generated dashboard at `/evie/app/` (same origin), so the policy also needs
+  `frame-src 'self'`. The dashboard itself is already inline-script-free: in TDA-SST it runs
+  under its own `script-src 'self'` policy, and a test there pins that.
 - **Configure Dependabot version updates** (`.github/dependabot.yml`) — see above. Include the
   `github-actions` ecosystem: the workflow's actions are on tag pins (`checkout@v4`,
   `upload-pages-artifact@v3`, `deploy-pages@v4`, `gitleaks-action@v2`), and nothing bumps them.
-- **Enable GitHub secret scanning and push protection** in Settings > Code security. Confirmed
-  **off** as of 2026-10-27: the API answers "Secret scanning is disabled on this repository."
-  Both are free on public repos. Push protection is the part Gitleaks cannot provide, since it
-  blocks the push instead of reporting after the fact.
 - **Re-enable strict ESLint rules** gradually (`no-undef`, `no-unused-vars`) as code is cleaned
   up; the stylistic rules (`semi`, `quotes`) are no longer enforced by the config at all since
   `eslint-config-standard` was dropped.

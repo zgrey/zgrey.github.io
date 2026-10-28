@@ -8,7 +8,9 @@ import globals from "globals";
 export default [
   {
     // Build output: generated copies of src/assets/js, previously linted twice.
-    ignores: ["_site/**"],
+    // src/evie/app: the EVIE dashboard, generated from TDA-SST (app.js is the
+    // real dashboard, unedited) and linted there, where it is written.
+    ignores: ["_site/**", "src/evie/app/**"],
   },
   js.configs.recommended,
   {

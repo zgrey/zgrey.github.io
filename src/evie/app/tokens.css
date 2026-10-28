@@ -1,0 +1,616 @@
+/* Typography: the platform's own monospace face, loaded from nowhere.
+ *
+ * Four vendored IBM Plex Mono woff2 subsets used to be declared here. They
+ * were dropped 2026-08-31 (owner): Plex is SIL OFL 1.1 and redistributable
+ * with its licence file, so this is not a compliance fix -- it is a decision
+ * not to ship a licensed binary asset in a scientific package for the sake of
+ * one typeface. A local dashboard has no brand to protect.
+ *
+ * Still no external loads. The stack below resolves on every platform without
+ * a network request, which was the actual property worth keeping.
+ */
+
+/* ===== Tokens — source of truth: zgrey.github.io src/assets/css/style.css ===== */
+:root{
+  --bg:#1a1a1a; --bg-sec:#222222; --bg-elev:#2a2a2a;
+  --text:#bdb191; --text-sec:#a9a076; --heading:#d0c2a5;
+  --accent:#537949; --accent-hover:#6ea262; --accent-dim:#2d3d28;
+  --border:#333333;
+  --ok:#6ea262; --warn:#c9a24a; --err:#c4614f;
+  --ramp-lo:#3a5233; --ramp-mid:#6ea262; --ramp-hi:#b5d9a8;
+  --div-lo:#c4614f; --div-mid:#6b675c; --div-hi:#6ea262;
+  /* categorical CLUSTER identities (not magnitudes) — validated CVD-safe set
+     (dataviz skill), order maximizes adjacent-pair CVD ΔE; re-validated on the
+     #1a1a1a dark surface (contrast ok, worst adjacent ΔE 10.3 → the cluster
+     legend is the required secondary encoding). Dark steps. */
+  --clust-1:#3987e5; --clust-2:#199e70; --clust-3:#c98500; --clust-4:#008300;
+  --clust-5:#9085e9; --clust-6:#e66767; --clust-7:#d55181; --clust-8:#d95926;
+  /* alternate categorical map "vibrant" (Tol vibrant, grey slot dropped, k≤6) —
+     dark steps re-validated on #1a1a1a (all four checks PASS, worst adjacent
+     tritan ΔE 11.7 floor-band → legend is the required secondary encoding) */
+  --clust2-1:#d96518; --clust2-2:#0077bb; --clust2-3:#1e97c9;
+  --clust2-4:#ee3377; --clust2-5:#cc3311; --clust2-6:#009988;
+  --img-lo:38; --img-hi:26;
+  --scrim:rgba(42,42,42,0.85);
+  --font-mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'DejaVu Sans Mono',monospace;
+}
+:root[data-evie="light"]{
+  --bg:#ffffff; --bg-sec:#f1f1f1; --bg-elev:#e8e8e8;
+  --text:#1b1b1b; --text-sec:#454545; --heading:#0b2d71;
+  --accent:#005ea2; --accent-hover:#0076d6; --accent-dim:#dbeefa;
+  --border:#c9c9c9;
+  --ok:#2e7d32; --warn:#946300; --err:#b50909;
+  --ramp-lo:#a6cdea; --ramp-mid:#0076d6; --ramp-hi:#0b2d71;
+  --div-lo:#b50909; --div-mid:#9a9a9a; --div-hi:#005ea2;
+  /* light steps of the same 8-hue set (worst adjacent CVD ΔE 24.2 on #ffffff;
+     aqua/yellow/magenta are sub-3:1 contrast → legend labels supply the relief) */
+  --clust-1:#2a78d6; --clust-2:#1baf7a; --clust-3:#eda100; --clust-4:#008300;
+  --clust-5:#4a3aa7; --clust-6:#e34948; --clust-7:#e87ba4; --clust-8:#eb6834;
+  /* "vibrant" light steps (Tol vibrant as published; validator PASS on #ffffff,
+     orange/sky sub-3:1 contrast WARN → legend labels supply the relief) */
+  --clust2-1:#ee7733; --clust2-2:#0077bb; --clust2-3:#33bbee;
+  --clust2-4:#ee3377; --clust2-5:#cc3311; --clust2-6:#009988;
+  --img-lo:214; --img-hi:22;
+  --scrim:rgba(241,241,241,0.9);
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:var(--font-mono);font-size:0.82rem;line-height:1.55;
+  color:var(--text);background:var(--bg);overflow:hidden;
+}
+button,input,select{font-family:var(--font-mono);}
+:focus-visible{outline:2px solid var(--accent-hover);outline-offset:1px;}
+input[type=range]{accent-color:var(--accent);cursor:ew-resize;width:96px;}
+
+.app{display:flex;flex-direction:column;height:100vh;}
+
+/* ===== Header ===== */
+.hdr{
+  display:flex;align-items:center;gap:1rem;padding:0.45rem 1rem;
+  background:var(--scrim);backdrop-filter:blur(4px);
+  border-bottom:1px solid var(--border);flex:none;z-index:10;
+}
+.hdr-brand{color:var(--heading);font-weight:700;font-size:0.95rem;letter-spacing:0.05em;}
+.hdr-ver{color:var(--text-sec);font-size:0.7rem;}
+.hdr-sep{color:var(--border);}
+.hdr-ds{color:var(--text);font-size:0.78rem;}
+.hdr-chips{display:flex;gap:0.4rem;margin-left:auto;align-items:center;}
+/* pipeline stage runner — lives in the top banner (was buried in the sidebar).
+   Compact chips; the active stage's progress renders as a bottom underline. */
+.hdr-stages{display:flex;align-items:center;gap:0.45rem;min-width:0;overflow:hidden;flex:1;}
+.hdr-stages[hidden]{display:none;}   /* hidden must beat the flex display */
+.hdr-stages .stage-line{
+  display:inline-flex;align-items:center;gap:0.35rem;position:relative;
+  padding:0.12rem 0.5rem;margin:0;border:1px solid transparent;border-left-width:1px;
+  border-radius:3px;font-size:0.68rem;white-space:nowrap;overflow:hidden;
+}
+.hdr-stages .stage-line.active{border-color:var(--accent);}
+.hdr-stages .st-pct{float:none;margin-left:0.1rem;}
+.hdr-stages .pbar{position:absolute;left:0;right:0;bottom:0;height:2px;margin:0;border-radius:0;}
+.hdr-stages .st-sep{color:var(--text-sec);opacity:0.55;flex:none;}
+.chip{
+  font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;
+  color:var(--text-sec);border:1px solid var(--border);border-radius:3px;
+  padding:0.1rem 0.45rem;background:var(--bg-sec);
+}
+.chip.live{color:var(--accent-hover);border-color:var(--accent);}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:0.35rem;vertical-align:0.02em;}
+.dot.pulse{animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+.theme-toggle{
+  background:none;border:1px solid var(--border);color:var(--text-sec);
+  font-size:0.72rem;cursor:pointer;padding:0.15rem 0.5rem;line-height:1.4;
+  transition:color 0.2s,border-color 0.2s;
+}
+.theme-toggle:hover{color:var(--text);border-color:var(--text-sec);}
+.hdr-quit{background:none;border:1px solid var(--border);color:var(--text-sec);
+  font-size:0.72rem;cursor:pointer;padding:0.15rem 0.5rem;line-height:1.4;border-radius:3px;
+  transition:color 0.2s,border-color 0.2s;}
+.hdr-quit:hover{color:var(--err);border-color:var(--err);}
+/* modal (clean-exit confirm + stopped state) */
+.modal-scrim{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.55);
+  display:flex;align-items:center;justify-content:center;}
+.modal-scrim[hidden]{display:none;}   /* hidden must beat the flex display */
+.modal-card{background:var(--bg-sec);border:1px solid var(--border);border-radius:8px;
+  padding:1.1rem 1.3rem;max-width:430px;box-shadow:0 10px 44px rgba(0,0,0,0.55);}
+.modal-card h2{color:var(--heading);font-size:0.95rem;margin-bottom:0.5rem;}
+.modal-card p{font-size:0.76rem;color:var(--text);margin-bottom:0.45rem;}
+.modal-card p.side-note{color:var(--text-sec);}
+.modal-card p.warn-line{color:var(--warn);}
+.modal-actions{display:flex;gap:0.5rem;margin-top:0.9rem;justify-content:flex-end;}
+.modal-actions button{background:var(--bg-elev);border:1px solid var(--border);color:var(--text);
+  border-radius:4px;padding:0.32rem 0.75rem;cursor:pointer;font-family:var(--font-mono);font-size:0.75rem;}
+.modal-actions button:hover{border-color:var(--accent-hover);color:var(--heading);}
+.modal-actions button.danger{border-color:var(--err);color:var(--err);}
+.modal-actions button.danger:hover{background:var(--err);color:var(--bg);}
+/* config export — same visual weight as the clear-results (.cancel) button;
+   only the hover hue differs (green = constructive, red = destructive) */
+.cfg-btn{width:100%;margin-top:0.4rem;background:none;border:1px solid var(--border);
+  color:var(--text-sec);font-family:var(--font-mono);font-size:0.74rem;
+  padding:0.35rem 0;border-radius:4px;cursor:pointer;
+  transition:color 0.2s,border-color 0.2s;}
+.cfg-btn:hover{color:var(--accent-hover);border-color:var(--accent);}
+/* wide enough that no row (label + input) forces a horizontal scrollbar;
+   inputs flex-shrink as a second line of defense on narrow viewports */
+.modal-card.wide{max-width:min(760px,94vw);max-height:84vh;overflow-y:auto;}
+
+/* mmd: a single-group dataset cannot be a two-sample test — dim it rather than
+   let it be picked and fail at run time */
+.side-item.disabled{
+  opacity:0.42;cursor:not-allowed;filter:grayscale(0.6);
+}
+.side-item.disabled:hover{border-color:var(--border);color:var(--text-sec);
+  background:var(--bg-elev);}
+
+/* a saved ensemble set whose sources moved: surfaced, not hidden, so it can be
+   reopened and rebuilt rather than silently running a different comparison */
+.side-item.broken{border-left-color:var(--warn);}
+.side-item.broken small{color:var(--warn);}
+
+/* custom ensemble builder */
+.ce-open{border-style:solid;}
+.ce-names{display:flex;gap:0.8rem;margin:0.5rem 0;}
+.ce-names label{display:flex;align-items:center;gap:0.35rem;font-size:0.7rem;
+  color:var(--text-sec);flex:1;min-width:0;}
+.ce-names .pinp{flex:1;min-width:0;}
+.ce-list{max-height:46vh;overflow-y:auto;border:1px solid var(--border);
+  border-radius:5px;padding:0.3rem;background:var(--bg);}
+.ce-ds{border-bottom:1px solid var(--border);padding:0.25rem 0;}
+.ce-ds:last-child{border-bottom:none;}
+.ce-dshead{display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;
+  font-size:0.72rem;}
+.ce-exp{background:none;border:none;color:var(--text-sec);cursor:pointer;
+  font-size:0.7rem;padding:0 0.2rem;flex:none;}
+.ce-name{color:var(--heading);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;min-width:0;flex:1 1 6rem;}
+.ce-cnt{color:var(--text-sec);font-size:0.66rem;font-variant-numeric:tabular-nums;}
+.ce-bulk{display:flex;gap:0.25rem;flex:none;}
+.ce-bulk button,.ce-tog,.ce-edit{
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:3px;
+  color:var(--text-sec);font-family:var(--font-mono);font-size:0.64rem;
+  padding:0.1rem 0.35rem;cursor:pointer;
+}
+.ce-bulk button:hover,.ce-tog:hover,.ce-edit:hover{
+  color:var(--accent-hover);border-color:var(--accent);}
+.ce-edit{margin-right:0.3rem;font-size:0.68rem;}
+.ce-imgs{margin:0.2rem 0 0.3rem 1.2rem;display:flex;flex-direction:column;gap:0.12rem;}
+.ce-img{display:flex;align-items:center;gap:0.35rem;font-size:0.66rem;}
+.ce-fn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;color:var(--text);}
+.ce-grp{color:var(--text-sec);font-size:0.6rem;flex:none;}
+.ce-tog{flex:none;min-width:1.6rem;}
+.ce-tog.on-a{background:var(--clust-1);border-color:var(--clust-1);color:var(--bg);}
+.ce-tog.on-b{background:var(--clust-2);border-color:var(--clust-2);color:var(--bg);}
+.ce-a{color:var(--clust-1);}
+.ce-b{color:var(--clust-2);}
+.ce-foot{font-size:0.72rem;color:var(--text-sec);margin-top:0.5rem;
+  font-variant-numeric:tabular-nums;}
+.ce-sum{font-size:0.7rem;color:var(--heading);}
+
+/* register-a-data-directory button */
+.ds-add{
+  display:block;width:100%;margin-top:0.2rem;cursor:pointer;
+  background:none;border:1px dashed var(--border);border-radius:4px;
+  color:var(--text-sec);font-family:var(--font-mono);font-size:0.72rem;
+  padding:0.32rem 0;transition:color 0.2s,border-color 0.2s;
+}
+.ds-add:hover{color:var(--accent-hover);border-color:var(--accent);}
+
+/* segmentation-scope explanation in the run form */
+.scope-note{font-size:0.65rem;line-height:1.5;margin:0.25rem 0 0.45rem;
+  padding-left:0.5rem;border-left:2px solid var(--border);}
+
+/* pre-run source-image browser */
+.ds-row{display:flex;align-items:stretch;gap:0.3rem;}
+.ds-row .side-item{flex:1;min-width:0;}
+.ds-peek{
+  flex:none;width:26px;margin-bottom:0.4rem;cursor:pointer;
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:4px;
+  color:var(--text-sec);font-family:var(--font-mono);font-size:0.75rem;
+  transition:color 0.2s,border-color 0.2s;
+}
+.ds-peek:hover{color:var(--accent-hover);border-color:var(--accent);}
+.dsprev-wrap{
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  min-height:220px;max-height:58vh;overflow:hidden;margin:0.5rem 0;
+}
+.dsprev-wrap img{max-width:100%;max-height:58vh;display:block;image-rendering:auto;}
+.dsprev-bar{display:flex;align-items:center;gap:0.5rem;}
+.dsprev-bar input[type=range]{flex:1;min-width:0;}
+.dsprev-bar button{
+  flex:none;background:var(--bg-elev);border:1px solid var(--border);border-radius:3px;
+  color:var(--text-sec);font-size:0.72rem;width:26px;height:22px;cursor:pointer;
+}
+.dsprev-bar button:hover{color:var(--accent-hover);border-color:var(--accent);}
+.dsprev-cap{font-size:0.7rem;color:var(--text-sec);margin-top:0.4rem;
+  font-variant-numeric:tabular-nums;}
+.cfg-rows{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;margin:0.6rem 0;}
+.cfg-rows .kv{display:flex;align-items:center;justify-content:space-between;gap:0.5rem;
+  font-size:0.7rem;padding:0.12rem 0;min-width:0;}
+.cfg-rows .k{color:var(--text-sec);}
+.cfg-rows .pinp{flex:1 1 7rem;width:auto;min-width:5rem;max-width:13rem;
+  background:var(--bg);border:1px solid var(--border);
+  color:var(--text);border-radius:3px;padding:0.12rem 0.3rem;font-family:var(--font-mono);font-size:0.7rem;}
+.cfg-prev summary{font-size:0.7rem;color:var(--text-sec);cursor:pointer;margin:0.3rem 0;}
+.cfg-prev pre{background:var(--bg);border:1px solid var(--border);border-radius:4px;
+  padding:0.5rem;font-size:0.66rem;line-height:1.5;max-height:200px;overflow:auto;
+  white-space:pre;color:var(--text);}
+
+/* ===== Main ===== */
+.main{display:flex;flex:1;min-height:0;}
+.side{
+  width:236px;flex:none;border-right:1px solid var(--border);
+  background:var(--bg-sec);overflow-y:auto;overflow-x:hidden;padding:0.8rem 0.65rem;
+  display:flex;flex-direction:column;gap:1rem;
+}
+/* sidebar width splitter (drag; double-click resets) */
+.sidesplit{flex:none;width:8px;cursor:col-resize;position:relative;}
+.sidesplit::after{
+  content:"";position:absolute;top:50%;left:3px;width:2px;height:44px;margin-top:-22px;
+  background:var(--border);border-radius:2px;transition:background 0.2s;
+}
+.sidesplit:hover::after{background:var(--accent);}
+.side-sec h3{
+  font-size:0.62rem;text-transform:uppercase;letter-spacing:0.09em;
+  color:var(--accent);font-weight:500;margin-bottom:0.45rem;
+}
+.side-item{
+  display:block;width:100%;text-align:left;cursor:pointer;
+  background:var(--bg-elev);border:1px solid var(--border);
+  border-left:3px solid transparent;border-radius:4px;
+  color:var(--text-sec);font-size:0.75rem;padding:0.35rem 0.55rem;margin-bottom:0.4rem;
+  transition:background 0.2s,border-color 0.2s,color 0.2s;
+  overflow-wrap:anywhere;   /* long dataset/session names wrap, never overflow */
+}
+.side-item:hover{border-left-color:var(--accent-hover);color:var(--text);}
+.side-item.active{border-left-color:var(--accent);background:var(--accent-dim);color:var(--heading);}
+.side-item small{display:block;color:var(--text-sec);font-size:0.62rem;margin-top:0.1rem;}
+.card{background:var(--bg-elev);border:1px solid var(--border);border-radius:6px;padding:0.6rem 0.7rem;}
+.card h3{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.09em;color:var(--accent);font-weight:500;margin-bottom:0.5rem;}
+.kv{display:flex;justify-content:space-between;gap:0.6rem;padding:0.12rem 0;font-size:0.74rem;}
+.kv .k{color:var(--text-sec);}
+/* a setting's name opens its help page in the terminal (app.js kvRow). No
+   glyph marks it: the name itself glows on hover and on keyboard focus. The
+   padding gives the glow room inside labels that clip for ellipsis; the
+   matching negative margin keeps the text where it was. */
+.kv .hk{cursor:pointer;padding:0.3rem 0.5rem;margin:-0.3rem -0.5rem;
+  transition:color 0.15s,text-shadow 0.15s;}
+.kv .hk:hover,.kv .hk:focus-visible{
+  outline:none;color:var(--accent-hover);
+  text-shadow:0 0 3px var(--accent-hover),0 0 10px var(--accent-hover);
+  text-shadow:0 0 3px color-mix(in srgb, var(--accent-hover) 85%, transparent),
+              0 0 10px color-mix(in srgb, var(--accent-hover) 60%, transparent);
+}
+.kv .v{color:var(--accent-hover);font-variant-numeric:tabular-nums;font-weight:500;}
+.stage-line{
+  padding:0.3rem 0.5rem;border-left:3px solid transparent;border-radius:4px;
+  color:var(--text-sec);opacity:0.45;font-size:0.74rem;margin-bottom:0.3rem;
+  transition:opacity 0.4s,color 0.4s,background 0.4s,border-color 0.4s;
+}
+.stage-line.done{opacity:0.8;}
+.stage-line.done .st-mark{color:var(--ok);}
+.stage-line.active{opacity:1;color:var(--heading);background:var(--bg-sec);border-left-color:var(--accent);}
+.stage-line .st-mark{display:inline-block;width:1.1em;color:var(--text-sec);}
+.stage-line .st-pct{float:right;color:var(--accent-hover);font-variant-numeric:tabular-nums;}
+.pbar{height:3px;background:var(--accent-dim);border-radius:2px;margin-top:0.3rem;overflow:hidden;}
+.pbar>div{height:100%;width:32%;background:var(--accent-hover);border-radius:2px;transition:width 0.5s;}
+.cancel{
+  width:100%;background:none;border:1px solid var(--border);border-radius:4px;
+  color:var(--text-sec);font-size:0.74rem;padding:0.35rem 0;cursor:pointer;
+  transition:color 0.2s,border-color 0.2s;
+}
+.cancel:hover{color:var(--err);border-color:var(--err);}
+.side-note{font-size:0.62rem;color:var(--text-sec);font-style:italic;line-height:1.5;}
+
+/* ===== Center ===== */
+.center{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding:10px;overflow:hidden;}
+.viz-head{display:flex;align-items:center;gap:1rem;flex:none;flex-wrap:wrap;}
+.segctl{display:flex;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.segctl button{
+  background:var(--bg-sec);border:none;border-right:1px solid var(--border);
+  color:var(--text-sec);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;
+  padding:0.28rem 0.7rem;cursor:pointer;transition:background 0.2s,color 0.2s;
+}
+.segctl button:last-child{border-right:none;}
+.segctl button:hover{color:var(--text);}
+.segctl button.on{background:var(--accent-dim);color:var(--heading);box-shadow:inset 0 -2px 0 var(--accent);}
+.mini-sel{
+  background:var(--bg-sec);border:1px solid var(--border);border-radius:3px;
+  color:var(--heading);font-size:0.7rem;padding:0.18rem 0.35rem;cursor:pointer;max-width:180px;
+}
+.viz-head .lbl{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.09em;color:var(--accent);}
+.viz-head .right{display:flex;gap:0.5rem;margin-left:auto;align-items:center;}
+/* minimize/restore for the supplemental plot row — same
+   idiom as the terminal fold; resizing via vsplit/hsplit still applies
+   when expanded */
+.supp-fold{background:none;border:1px solid var(--border);border-radius:3px;
+  color:var(--text-sec);cursor:pointer;font-size:0.7rem;padding:0.08rem 0.4rem;
+  transition:color 0.2s,border-color 0.2s;}
+.supp-fold:hover{color:var(--accent-hover);border-color:var(--accent);}
+/* cluster count control + legend (shown only in the cluster fill view) */
+.clust-ctl{display:inline-flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--text-sec);}
+/* the `hidden` attribute must win over the flex display above (same specificity
+   otherwise loses to it) — without this the control shows in every view */
+.clust-ctl[hidden]{display:none;}
+.kstep{width:18px;height:18px;line-height:1;padding:0;border:1px solid var(--border);
+  background:var(--bg-elev);color:var(--text);border-radius:4px;cursor:pointer;font-size:0.85rem;}
+.kstep:hover:not(:disabled){border-color:var(--accent-hover);color:var(--accent-hover);}
+.kstep:disabled{opacity:0.4;cursor:default;}
+#kVal{min-width:0.9em;text-align:center;font-variant-numeric:tabular-nums;color:var(--heading);}
+.clust-legend{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.clust-chip{display:inline-flex;align-items:center;gap:3px;font-variant-numeric:tabular-nums;}
+.clust-sw{width:10px;height:10px;border-radius:2px;border:1px solid var(--border);display:inline-block;}
+.wtog{border:1px solid var(--border);background:var(--bg-elev);color:var(--text-sec);
+  border-radius:4px;cursor:pointer;font-size:0.68rem;padding:0.1rem 0.4rem;}
+.wtog:hover{color:var(--text);}
+.wtog.on{background:var(--accent-dim);color:var(--heading);border-color:var(--accent);}
+
+.img-row{flex:1 1 auto;min-height:140px;display:flex;gap:10px;min-width:0;justify-content:center;}
+.panel{
+  position:relative;background:var(--bg-sec);border:1px solid var(--border);border-radius:6px;
+  display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;
+  /* size queries key on the PANEL, not the viewport: panels
+     are drag-resizable and their default width is derived from available
+     height, so a panel can be cramped on a large screen.  A viewport media
+     query cannot see that; a container query can. */
+  container-type:inline-size;
+}
+.img-panel{flex:1;}
+/* Wraps rather than clips.  The panel is overflow:hidden and
+   resizable, so on a small screen the image toolbar used to be cut off with no
+   way to reach contrast/crop.  Wrapping gives the toolbar its own row instead
+   of squeezing it, and the shrink order below decides what yields first:
+   filename dropdown, then the meta counter, never the controls. */
+.panel-head{
+  display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;row-gap:0.25rem;
+  padding:0.32rem 0.6rem;border-bottom:1px solid var(--border);flex:none;
+}
+.panel-head h2{font-size:0.7rem;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:var(--heading);white-space:nowrap;flex:0 0 auto;}
+/* the filename dropdown is the widest and least critical element — it gives
+   way first (min-width:0 is required for a flex item to shrink at all) */
+.panel-head .mini-sel{flex:1 1 5rem;min-width:0;}
+.panel-head .meta{font-size:0.65rem;color:var(--text-sec);margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0;}
+.panel-body{flex:1;position:relative;min-height:0;}
+.panel-body canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+/* flex:none + nowrap — the toolbar is ATOMIC.  It must never be compressed and
+   must never wrap internally: letting it wrap orphaned the dimming slider onto
+   a second line where it collided with the meta counter, which is precisely the
+   "contrast adjustment" the small-screen report was about.  .panel-head wraps
+   it as a single unit instead, so the slider always travels with its buttons. */
+.itb{display:flex;gap:0.25rem;align-items:center;flex:none;flex-wrap:nowrap;}
+.itb button{
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:3px;
+  color:var(--text-sec);font-size:0.7rem;line-height:1;width:22px;height:20px;cursor:pointer;
+  transition:color 0.2s,border-color 0.2s,background 0.2s;
+}
+.itb button:hover{color:var(--accent-hover);border-color:var(--accent);}
+.itb button.on{background:var(--accent-dim);border-color:var(--accent);color:var(--heading);}
+.crop-ui{display:none;gap:0.3rem;align-items:center;font-size:0.64rem;color:var(--warn);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.crop-ui.show{display:flex;}
+.crop-ui button{
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:3px;
+  color:var(--accent-hover);font-size:0.64rem;padding:0.08rem 0.4rem;cursor:pointer;
+}
+.crop-ui button:hover{border-color:var(--accent);}
+
+/* ===== scrollbars — squared, template colors ===== */
+*{scrollbar-width:thin;scrollbar-color:var(--accent-dim) var(--bg-sec);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:var(--bg-sec);border-radius:0;}
+::-webkit-scrollbar-thumb{background:var(--accent-dim);border:1px solid var(--border);border-radius:0;}
+::-webkit-scrollbar-thumb:hover{background:var(--accent);}
+::-webkit-scrollbar-corner{background:var(--bg-sec);}
+
+/* pinned shape cards — dimension-reduction viz lives here, so cards default
+   large, fill available row space, and shrink/wrap as more cards arrive */
+.pins{width:300px;flex:none;display:flex;flex-direction:column;gap:8px;overflow-y:auto;align-content:flex-start;}
+.pins.grid{flex:1 1 0;width:auto;flex-direction:row;flex-wrap:wrap;}
+/* cards grow past the base width to consume leftover row space (no dead gap to
+   the right), capped so a lone card doesn't sprawl the whole panel */
+.pins.grid .pin-card{flex:1 1 var(--pinw,300px);max-width:var(--pinmax,560px);}
+.psplit{flex:none;width:8px;cursor:col-resize;position:relative;}
+.psplit::after{
+  content:"";position:absolute;top:50%;left:3px;width:2px;height:44px;margin-top:-22px;
+  background:var(--border);border-radius:2px;transition:background 0.2s;
+}
+.psplit:hover::after{background:var(--accent);}
+.pin-card{background:var(--bg-sec);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:6px;padding:0.4rem 0.45rem;flex:none;position:relative;}
+/* user drag-resized card (edges/corners): explicit size wins over the flex
+   sizing; the canvas gives up its 4:3 lock and fills the freed height */
+.pin-card.freesize{flex:0 0 auto !important;max-width:none !important;
+  display:flex;flex-direction:column;min-width:150px;min-height:130px;}
+.pin-card.freesize canvas{aspect-ratio:auto;flex:1 1 auto;min-height:0;height:auto;}
+.pin-head{display:flex;align-items:center;justify-content:space-between;font-size:0.62rem;color:var(--heading);}
+.pin-head button{background:none;border:none;color:var(--text-sec);cursor:pointer;font-size:0.7rem;padding:0 0.1rem;}
+.pin-head button:hover{color:var(--err);}
+.pin-card canvas{width:100%;aspect-ratio:4/3;height:auto;display:block;background:var(--bg);border:1px solid var(--border);border-radius:4px;margin:0.3rem 0;}
+.pin-kv{font-size:0.6rem;color:var(--text-sec);line-height:1.55;font-variant-numeric:tabular-nums;}
+.pin-kv b{color:var(--accent-hover);font-weight:500;}
+
+.vsplit{flex:none;height:8px;cursor:row-resize;border-radius:4px;position:relative;}
+.vsplit::after{
+  content:"";position:absolute;left:50%;top:3px;width:56px;height:2px;margin-left:-28px;
+  background:var(--border);border-radius:2px;transition:background 0.2s;
+}
+.vsplit:hover::after{background:var(--accent);}
+.supp-row{flex:none;display:flex;min-height:0;gap:0;}
+.supp-row .panel{flex:1 1 0;}
+/* Close sits FIRST (top-left) via order:-1, not last.  The head wraps now, and
+   as the trailing item the ✕ was the first thing pushed onto a second row when
+   the window narrowed — the control you reach for to fix a cramped layout was
+   the one the cramped layout moved.  The first flex item is always on line 1,
+   so ordering it first pins it without absolute positioning. */
+.supp-row .panel-head .close{
+  order:-1;
+  background:none;border:none;color:var(--text-sec);cursor:pointer;font-size:0.75rem;
+  padding:0 0.15rem;line-height:1;margin-right:0.15rem;flex:none;
+}
+.supp-row .panel-head .close:hover{color:var(--err);}
+.hsplit{flex:none;width:10px;cursor:col-resize;position:relative;}
+.hsplit::after{
+  content:"";position:absolute;top:50%;left:4px;width:2px;height:44px;margin-top:-22px;
+  background:var(--border);border-radius:2px;transition:background 0.2s;
+}
+.hsplit:hover::after{background:var(--accent);}
+
+/* ===== Bottom strip ===== */
+.term{flex:none;border-top:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;}
+.term-head{
+  display:flex;align-items:center;gap:0.6rem;padding:0.25rem 0.8rem;
+  background:var(--bg-elev);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;
+}
+.term-head h2{font-size:0.62rem;font-weight:500;text-transform:uppercase;letter-spacing:0.09em;color:var(--accent);}
+.term-head .hint{font-size:0.62rem;color:var(--text-sec);margin-left:auto;}
+.term-head .fold{background:none;border:none;color:var(--text-sec);cursor:pointer;font-size:0.7rem;padding:0 0.2rem;}
+.term-body{display:flex;height:122px;min-height:0;}
+/* expanded for reading help: tall, but never taller than half the window so
+   the run controls above stay reachable */
+.term.tall .term-body{height:min(50vh,480px);}
+.term.folded .term-body{display:none;}
+.term-scroll{flex:1.15;min-width:0;overflow-y:auto;padding:0.45rem 0.8rem;font-size:0.72rem;line-height:1.65;position:relative;}
+.tl-in .pfx{color:var(--accent-hover);font-weight:500;}
+.tl-in .cmd{color:var(--heading);}
+.tl-out{color:var(--text-sec);white-space:pre-wrap;}
+.tl-err{color:var(--err);white-space:pre-wrap;}
+/* help pages: rendered from typed blocks with textContent, never innerHTML */
+.tl-help{margin:0.2rem 0 0.5rem 1.2rem;max-width:88ch;color:var(--text);}
+.tl-help .h-title{color:var(--heading);font-weight:500;}
+.tl-help .h-meta{color:var(--text-sec);font-size:0.66rem;}
+.tl-help .h-short{color:var(--text-sec);font-style:italic;margin-bottom:0.25rem;}
+.tl-help .h-sub{color:var(--accent);font-size:0.64rem;text-transform:uppercase;letter-spacing:0.08em;margin-top:0.35rem;}
+.tl-help p{margin:0.25rem 0;}
+.tl-help ul{margin:0.2rem 0 0.2rem 1.1rem;padding:0;}
+.tl-help code{color:var(--accent-hover);}
+.tl-help pre{margin:0.25rem 0;padding:0.3rem 0.5rem;background:var(--bg-sec);border:1px solid var(--border);border-radius:3px;white-space:pre-wrap;color:var(--text-sec);}
+.tl-help table{border-collapse:collapse;margin:0.25rem 0;}
+.tl-help td,.tl-help th{padding:0.05rem 0.9rem 0.05rem 0;text-align:left;vertical-align:top;}
+.tl-help th{color:var(--text-sec);font-weight:500;}
+.tl-link{color:var(--accent-hover);cursor:pointer;text-decoration:underline dotted;background:none;border:none;padding:0;font:inherit;}
+.tl-link:hover,.tl-link:focus-visible{color:var(--accent);}
+.tl-link.bad{color:var(--err);cursor:default;text-decoration:none;}
+/* the conversation: one block per run, one line per routine call */
+.tl-run{margin:0.3rem 0 0.4rem;padding-left:0.6rem;border-left:2px solid var(--border);}
+.tl-run .r-head{color:var(--heading);}
+.tl-run .r-end{color:var(--ok);}
+.tl-call{white-space:pre-wrap;}
+.tl-call .c-args,.tl-call .c-arrow{color:var(--text-sec);}
+.tl-call .c-res{color:var(--text);}
+.tl-call .c-res.rej{color:var(--accent-hover);}
+.log-col{flex:1;min-width:0;border-left:1px solid var(--border);background:var(--bg-sec);display:flex;flex-direction:column;}
+.log-col .log-cap{display:flex;gap:0.6rem;align-items:baseline;padding:0.3rem 0.8rem 0.15rem;flex:none;}
+.log-col .log-cap h3{font-size:0.62rem;font-weight:500;text-transform:uppercase;letter-spacing:0.09em;color:var(--accent);}
+.log{flex:1;overflow-y:auto;padding:0.1rem 0.8rem 0.45rem;font-size:0.7rem;line-height:1.65;}
+.log .t{color:var(--text-sec);margin-right:0.55rem;font-variant-numeric:tabular-nums;}
+.log .okm{color:var(--ok);margin-right:0.35rem;}
+.log .warnm{color:var(--warn);margin-right:0.35rem;}
+.log .run{color:var(--accent-hover);margin-right:0.35rem;display:inline-block;}
+.log .run.spin{animation:spin 1s steps(8) infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.term-input{display:flex;align-items:center;gap:0.5rem;padding:0.35rem 0.8rem;border-top:1px solid var(--border);background:var(--bg-sec);}
+.term-input .pfx{color:var(--accent-hover);font-weight:500;font-size:0.78rem;}
+.term-input input{
+  flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-size:0.76rem;padding:0.28rem 0.55rem;outline:none;transition:border-color 0.2s;border-radius:3px;
+}
+.term-input input:focus{border-color:var(--accent);}
+.term-input input::placeholder{color:var(--text-sec);opacity:0.7;}
+
+.tip{
+  position:fixed;pointer-events:none;z-index:50;display:none;
+  background:var(--bg-elev);border:1px solid var(--border);border-radius:4px;
+  padding:0.3rem 0.5rem;font-size:0.68rem;color:var(--text);
+  font-variant-numeric:tabular-nums;box-shadow:0 2px 10px rgba(0,0,0,0.35);
+}
+.tip b{color:var(--accent-hover);font-weight:500;}
+
+@media (prefers-reduced-motion:reduce){
+  .dot.pulse,.log .run.spin{animation:none;}
+  *{transition-duration:0.01s !important;}
+}
+@media (max-width:900px){
+  body{overflow:auto;}
+  .app{height:auto;}
+  .hdr-stages{display:none;}   /* no room in the banner — the log still mirrors stages */
+  .main{flex-direction:column;}
+  .side{width:100%;border:none;border-bottom:1px solid var(--border);}
+  .img-row{flex-direction:column;min-height:520px;}
+  .pins{width:100%;flex-direction:row;overflow-x:auto;}
+  .supp-row{flex-direction:column;height:auto !important;}
+  .hsplit{display:none;}
+  .sidesplit{display:none;}
+}
+
+/* ===== live run form (dashboard 1d) ===== */
+.pinp{
+  background:var(--bg);border:1px solid var(--border);border-radius:3px;
+  color:var(--heading);font-family:var(--font-mono);font-size:0.72rem;
+  padding:0.1rem 0.35rem;width:6.2rem;text-align:right;
+  font-variant-numeric:tabular-nums;outline:none;transition:border-color 0.2s;
+}
+.pinp:focus{border-color:var(--accent);}
+.run-btn{
+  width:100%;margin-top:0.6rem;background:var(--accent);border:1px solid var(--accent);
+  color:var(--bg);font-family:var(--font-mono);font-size:0.76rem;font-weight:500;
+  letter-spacing:0.03em;padding:0.4rem 0;border-radius:4px;cursor:pointer;
+  transition:background 0.2s;
+}
+.run-btn:hover{background:var(--accent-hover);}
+.run-btn:disabled{opacity:0.5;cursor:not-allowed;}
+/* stale: run-form params changed since the displayed results were produced */
+.run-btn.stale{background:var(--warn);border-color:var(--warn);color:#1a1a1a;
+  animation:runpulse 1.7s ease-in-out infinite;}
+.run-btn.stale:hover{background:var(--warn);filter:brightness(1.08);}
+@keyframes runpulse{0%,100%{box-shadow:0 0 0 0 rgba(201,162,74,0);}
+  50%{box-shadow:0 0 0 3px rgba(201,162,74,0.4);}}
+@media (prefers-reduced-motion: reduce){.run-btn.stale{animation:none;}}
+
+/* ===== live-mode additions: panel spinners, form sections, confirm bar ===== */
+.panel-body.loading::after{
+  content:"";position:absolute;top:8px;right:8px;width:14px;height:14px;
+  border:2px solid var(--accent-dim);border-top-color:var(--accent-hover);
+  border-radius:50%;animation:pspin 0.8s linear infinite;z-index:5;
+}
+@keyframes pspin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){.panel-body.loading::after{animation:none;}}
+.form-sub{
+  font-size:0.6rem;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--text-sec);margin:0.55rem 0 0.15rem;
+}
+/* ===== run-form fit fixes: inputs must never overflow the card ===== */
+#paramCard .kv{gap:0.35rem;min-width:0;align-items:center;}
+#paramCard .kv .k{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+#paramCard .pinp{width:4.6rem;flex:none;}
+/* text-valued fields (tol_int, sub_reg, r_vals, …) hold longer content:
+   let them grow with the (resizable) sidebar instead of clipping */
+#paramCard .pinp[type=text]{flex:1 1 4.6rem;width:auto;min-width:4.6rem;max-width:12rem;}
+#paramCard .mini-sel{max-width:8.5rem;}
+.fchk{accent-color:var(--accent);width:14px;height:14px;flex:none;}
+/* no browser up/down spinners on number inputs — they clash with the
+   mono right-aligned form style; keyboard ↑/↓ still work */
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+
+/* dimming slider in the image toolbar — the widest single control, so it is
+   the one part of the toolbar allowed to give ground before wrapping */
+.itb .dimr{width:60px;min-width:38px;flex:0 1 60px;margin-left:0.3rem;}
+
+/* Cramped PANEL — measured against the panel's own width, so
+   it fires whether the window is small or the panel was squeezed on a big
+   screen.  Give the toolbar its own full-width row so the dimming slider (the
+   "contrast adjustment" the report named) can never be clipped, and drop the
+   uppercase title since the filename dropdown already names the image. */
+@container (max-width: 460px){
+  .img-panel .panel-head h2{display:none;}
+  .img-panel .panel-head{gap:0.35rem;}
+  .img-panel .panel-head .itb{flex-basis:100%;justify-content:flex-start;}
+  .img-panel .panel-head .meta{margin-left:0;}
+}
+/* Phones/split windows: also shrink the widest control. */
+@media (max-width: 760px){
+  .itb .dimr{width:48px;}
+}
