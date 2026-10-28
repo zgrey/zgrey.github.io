@@ -2725,7 +2725,7 @@ if (LIVE) (function(){
     }
     if (kind==='RunCompleted'){
       hasResults=true; saved=false;
-      chipState(`✓ ${curWorkflow} · finished — results ready`, false);
+      chipState(`✓ ${esc(curWorkflow)} · finished — results ready`, false);
       llog('ok', 'run complete — all results loaded (use 🗑 clear results to reset)');
       setPills(true);
       persistSavedSetSeg();   // the set remembers how it was just analysed
