@@ -187,6 +187,13 @@
       });
     });
   }
+  /* ---- no server to stop: the dashboard's quit would announce a shutdown
+     that never happened, so the demo goes without it ---- */
+  document.addEventListener('DOMContentLoaded', () => {
+    const quit = document.getElementById('quitBtn');
+    if (quit) quit.style.display = 'none';
+  });
+
   DemoSocket.prototype.send = function () {};      // a recorded run never waits for input
   DemoSocket.prototype.close = function () { this.readyState = 3; };
   DemoSocket.CONNECTING = 0; DemoSocket.OPEN = 1; DemoSocket.CLOSING = 2; DemoSocket.CLOSED = 3;
