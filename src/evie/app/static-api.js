@@ -101,15 +101,44 @@
       suggestions: helpSearch(help, key).slice(0, 8).map((p) => p.id) } });
   }
 
-  /* ---- reconstructions: one file per r, every sample; filter to ids ---- */
+  /* ---- reconstructions: one file per r, every sample; filter to ids.
+     The run's own r is JSON; the probe-line r are int16 at 1/scale px, one
+     row per sample in probe.ids order (_encode_probe in make_web_demo.py). */
+  const bins = {};
+  function binary(name) {
+    if (!bins[name]) {
+      bins[name] = realFetch(new URL(name + '?v=' + BUILD, DATA)).then((r) => {
+        if (!r.ok) throw new Error(name + ': HTTP ' + r.status);
+        return r.arrayBuffer();
+      }).then((b) => new Int16Array(b));
+    }
+    return bins[name];
+  }
+  const MISSING = -32768;
   async function answerReconstruct(m, query) {
     const get = (k) => (query.find(([n]) => n === k) || [])[1];
     const r = get('r');
-    const name = m.states[state].recon[r];
+    const st = m.states[state];
+    const name = st.recon[r];
     if (!name) return reply(409, { detail: 'reconstruction at r=' + r + ' was not recorded in this demo' });
-    const all = await file(name);
+    const want = String(get('ids') || '').split(',').filter(Boolean);
     const out = {};
-    for (const id of String(get('ids') || '').split(',')) if (id in all) out[id] = all[id];
+    if (!name.endsWith('.bin')) {
+      const all = await file(name);
+      for (const id of want) if (id in all) out[id] = all[id];
+      return reply(200, out);
+    }
+    const q = await binary(name), { ids, points, scale } = st.probe;
+    if (!st.probeRow) st.probeRow = new Map(ids.map((id, i) => [String(id), i]));
+    for (const id of want) {
+      const row = st.probeRow.get(id);
+      if (row === undefined) continue;
+      const at = row * points * 2;
+      if (q[at] === MISSING) continue;
+      const curve = new Array(points);
+      for (let p = 0; p < points; p++) curve[p] = [q[at + 2 * p] / scale, q[at + 2 * p + 1] / scale];
+      out[id] = curve;
+    }
     return reply(200, out);
   }
 
