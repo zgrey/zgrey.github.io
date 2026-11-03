@@ -223,6 +223,34 @@
     if (quit) quit.style.display = 'none';
   });
 
+  /* ---- workflows: here each workflow IS its recorded session.  On its
+     own a workflow button switches the layout and the run form but leaves
+     the other run's results on screen (mmdG2Image over g2 data has no
+     witness, so every shape fills alike); with a server, the next step
+     would be to run it, which the demo cannot.  So a click on the workflow
+     not on screen loads its recorded session instead, by the same route as
+     clicking that session under Sessions, prompt included.  Loading a
+     session already selects its workflow (doLoadSession in app.js), so the
+     two stay in step both ways.  Capturing on document runs this before
+     app.js's own handler on the button, which it then withholds.  The ids
+     and the session title are checked at export (SHIM_HOOKS). ---- */
+  const WORKFLOWS = { wfG2: 'g2image', wfMMD: 'mmdg2image' };
+  let shown = null;                          // the manifest, once it has arrived
+  manifest.then((m) => { shown = m; });
+  document.addEventListener('click', (e) => {
+    const btn = e.target instanceof Element && e.target.closest('#wfG2, #wfMMD');
+    if (!btn) return;
+    const want = WORKFLOWS[btn.id];
+    if (shown && shown.states[state].workflow === want) return;   // already on screen
+    e.stopImmediatePropagation();
+    if (!shown) return;                      // nothing on screen yet to switch from
+    const s = shown.sessions.find((x) => shown.states[x.state].workflow === want);
+    const item = s && Array.from(document.querySelectorAll('#sessSec button'))
+      .find((b) => b.title === 'load ' + s.name);
+    if (item) item.click();
+    else console.warn('[evie demo] no recorded session to show for', want);
+  }, true);
+
   DemoSocket.prototype.send = function () {};      // a recorded run never waits for input
   DemoSocket.prototype.close = function () { this.readyState = 3; };
   DemoSocket.CONNECTING = 0; DemoSocket.OPEN = 1; DemoSocket.CLOSING = 2; DemoSocket.CLOSED = 3;
