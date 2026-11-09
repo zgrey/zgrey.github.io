@@ -409,19 +409,54 @@ function strokePoly(ctx,map,poly,o){
   ctx.strokeStyle=css(o.stroke||'--accent-hover');ctx.lineWidth=o.width||2;
   ctx.globalAlpha=o.alpha==null?1:o.alpha;ctx.stroke();ctx.globalAlpha=1;ctx.setLineDash([]);
 }
+/* ---------- witness label: the test cell the witness values come from ----------
+   The MMD test runs over an (r, n_re) grid and every cell has its own witness
+   function, so a witness is named by its test and cell, e.g.
+   "witness gr · r 75 · n_re 1000 · scale 2".  The SPD witness uses every SPD
+   coordinate and does not depend on r, so its label leaves r out.  With no cell
+   on record (an older server or recording) the label is plain "witness": it
+   never guesses. */
+function witTestName(){
+  const names=(LIVEAPI.liveWitNames && LIVEAPI.liveWitNames())||null;
+  if (!names || !names.length) return '';
+  const n=names[clamp(S.witCol,0,names.length-1)];
+  return (n==='gr'||n==='spd') ? n : '';
+}
+function fmtScale(s){
+  if (s==null) return '';
+  if (typeof s==='object')
+    return Object.entries(s).filter(([,v])=>v!=null).map(([k,v])=>`${k} ${+v}`).join(', ');
+  return String(+s);
+}
+function witCellText(){
+  const c=LIVEAPI.liveWitCell && LIVEAPI.liveWitCell();
+  if (!c) return '';
+  const parts=[];
+  if (witTestName()!=='spd') parts.push(`r ${c.r}`);
+  parts.push(`n_re ${c.n_re}`);
+  const sc=fmtScale(c.scale); if (sc) parts.push(`scale ${sc}`);
+  return parts.join(' · ');
+}
+function witName(){ const t=witTestName(); return t ? `witness ${t}` : 'witness'; }
+function witLabel(){ const c=witCellText(); return c ? `${witName()} · ${c}` : witName(); }
+/* colorbar end labels: two significant figures, so a small but real witness
+   never reads as ±0.00 */
+const sig2 = v => { const s=Math.abs(v).toPrecision(2); return s.includes('e') ? (+s).toExponential(1) : s; };
+
 /* fill-view colorbar (live): sequential ramp for d_Prod/d_Gr/d_SPD (0..max),
    diverging ramp for witness (±|w|max, 0 at center).  Cluster fill uses the
    legend instead.  Drawn unclipped in the image panel's bottom-right. */
+function fillColorbarWidth(R){ return Math.min(132, R.rw*0.42); }
 function fillColorbar(ctx,R){
   if (S.view!=='fill' || S.fillBy==='clust') return;
   const smp=curSamples()||[]; if(!smp.length) return;
-  const bw=Math.min(132, R.rw*0.42), bh=9;
+  const bw=fillColorbarWidth(R), bh=9;
   const bx=R.rx+R.rw-bw-12, by=R.ry+R.rh-24;
   let diverging=false, label='', loL='', midL=null, hiL='';
   if (S.fillBy==='wit'){
     diverging=true;
     const wm=(LIVEAPI.liveWitMax?LIVEAPI.liveWitMax():1)||1;
-    label='witness'; loL=(-wm).toFixed(2); midL='0'; hiL='+'+wm.toFixed(2);
+    label=witName(); loL='-'+sig2(wm); midL='0'; hiL='+'+sig2(wm);
   } else {
     const pick=o=>S.fillBy==='dGr'?o.dGr:S.fillBy==='dSPD'?o.dSPD:o.dProd;
     const dmax=Math.max(...smp.map(pick))||1;
@@ -859,7 +894,11 @@ function drawWhist(){
   ctx.fillStyle=css('--text-sec');ctx.fillText(labA,W-m.r-74,m.t+13);
   ctx.fillStyle=css('--div-lo');ctx.fillRect(W-m.r-86,m.t+20,8,8);
   ctx.fillStyle=css('--text-sec');ctx.fillText(labB,W-m.r-74,m.t+27);
-  ctx.fillText(`witness value w(x) · |w|max ${wmax.toExponential(1)}`,W/2-70,H-9);
+  /* caption names the test cell; |w|max is dropped first when space is short */
+  const lab=witLabel(), full=`${lab} · |w|max ${wmax.toExponential(1)}`;
+  ctx.textAlign='center';
+  ctx.fillText(ctx.measureText(full).width<=pw ? full : lab, m.l+pw/2, H-9);
+  ctx.textAlign='left';
 }
 let SSWEEP_GEOM=null;   // hover/click geometry of the last ssweep paint
 function drawSsweep(){
@@ -1218,7 +1257,14 @@ function pinFromSample(sample){
   LIVEAPI.livePinToggle(key, sample);
   LIVEAPI.livePrefetch(key).then(()=>{ if (LIVEAPI.drawLivePins) LIVEAPI.drawLivePins(); });
 }
-const witTip = o => (o.wit!=null) ? `<br>witness w = ${o.wit.toFixed(3)}` : '';
+/* "test cell", so the witness's r is not mistaken for the r slider's
+   reconstruction r */
+const witTip = o => {
+  if (o.wit==null) return '';
+  const cell=witCellText();
+  return `<br>${esc(witName())} w = ${o.wit.toFixed(3)}`
+       + (cell ? `<br>test cell ${esc(cell)}` : '');
+};
 const clustTip = o => (o.clust!=null) ? ` · ${clustLabel(o)}` : '';
 /* one r-line in a spectrum/RMSE tile: vertical (solid accent for
    the locked run r, dashed hover for the probe r′), optional curve-marker
@@ -1694,19 +1740,57 @@ function showClustDocs(){
   if(cm) cm.addEventListener('change',e=>pickClustMethod(e.target.value));
   const cd=document.getElementById('clustDocs');
   if(cd) cd.addEventListener('click', showClustDocs); }
-/* ---------- witness column switch (gr / spd, test='both' only) ---------- */
+/* ---------- witness controls: gr / spd column (test='both') + test cell ---------- */
 function syncWitCtl(){
   const el=document.getElementById('witCtl'); if(!el) return;
   const names=(LIVEAPI.liveWitNames && LIVEAPI.liveWitNames()) || null;
-  const on = S.mode==='mmd' && S.view==='fill' && S.fillBy==='wit' && names && names.length===2;
+  const has=!!(LIVEAPI.liveHasWitness && LIVEAPI.liveHasWitness());
+  const on = S.mode==='mmd' && S.view==='fill' && S.fillBy==='wit' && has;
   el.hidden=!on;
-  if (on){
-    const g=document.getElementById('witGr'), s=document.getElementById('witSpd');
-    if(g) g.classList.toggle('on', S.witCol===0);
-    if(s) s.classList.toggle('on', S.witCol===1);
+  if (!on) return;
+  const two = !!(names && names.length===2);
+  const g=document.getElementById('witGr'), s=document.getElementById('witSpd');
+  if(g){ g.hidden=!two; g.classList.toggle('on', S.witCol===0); }
+  if(s){ s.hidden=!two; s.classList.toggle('on', S.witCol===1); }
+  syncWitCellSel();
+}
+/* The test-cell picker.  A run keeps coordinates for one n_re, so the witness
+   can move to any r tested there; cells at other n_re are listed, disabled,
+   with the reason.  The SPD witness does not depend on r, so the picker is
+   disabled while it is shown. */
+function syncWitCellSel(){
+  const sel=document.getElementById('witCell'); if(!sel) return;
+  const grid=LIVEAPI.liveWitGrid && LIVEAPI.liveWitGrid();
+  const cell=LIVEAPI.liveWitCell && LIVEAPI.liveWitCell();
+  if (!grid || !cell){ sel.hidden=true; return; }
+  sel.hidden=false;
+  if (witTestName()==='spd'){
+    sel.innerHTML=`<option selected>cell: n_re ${cell.n_re} (spd: no r)</option>`;
+    sel.disabled=true;
+    sel.title='The spd witness uses every SPD coordinate, so it does not depend on r';
+    return;
   }
+  const opts=[];
+  grid.nre_vals.forEach((n,j)=>grid.r_vals.forEach((r,i)=>{
+    if (!(grid.tested[i]||[])[j]) return;
+    const kept = n===grid.n_re;
+    opts.push(kept
+      ? `<option value="${r}"${r===cell.r?' selected':''}>cell: r ${r} · n_re ${n}</option>`
+      : `<option value="" disabled>cell: r ${r} · n_re ${n} (coordinates not kept)</option>`);
+  }));
+  sel.innerHTML=opts.join('');
+  sel.disabled = grid.r.length<2;
+  sel.title = grid.r.length<2
+    ? `Only one r was tested at n_re ${grid.n_re}`
+    : `Test cell the witness is computed at: any r tested at n_re ${grid.n_re}, `
+      +'the n_re whose coordinates this run kept';
 }
 LIVEAPI.syncWitCtl=syncWitCtl;
+{ const el=document.getElementById('witCell');
+  if (el) el.addEventListener('change',e=>{
+    const r=parseInt(e.target.value,10);
+    if (Number.isFinite(r) && LIVEAPI.livePickWitR) LIVEAPI.livePickWitR(r);
+  }); }
 function pickWitCol(col){
   if (col===S.witCol) return;
   S.witCol=col;
@@ -1744,11 +1828,31 @@ function pickCmap(kind, name){
   if (el) el.addEventListener('change',e=>pickCmap(el.dataset.kind, e.target.value)); }
 /* the three fill-view controls always sync together */
 function syncFillCtls(){ syncClustCtl(); syncWitCtl(); syncCmapCtl(); }
+/* The witness fill is offered only when the loaded samples carry witness
+   values: in the mmd layout it is otherwise listed, disabled, with the reason
+   (a g2 run on screen would paint every shape one neutral color, reading as
+   "no difference").  Called whenever the mode or the data changes. */
 function setFillOptions(){
   const sel=document.getElementById('fillBy');
   const base=`<option value="dProd">color: d_Prod</option><option value="dGr">color: d_Gr</option><option value="dSPD">color: d_SPD</option><option value="clust">color: cluster</option>`;
-  sel.innerHTML=S.mode==='mmd'?base+`<option value="wit">color: witness</option>`:base;
-  if (S.mode!=='mmd'&&S.fillBy==='wit') S.fillBy='dProd';
+  const has=!!(LIVEAPI.liveHasWitness && LIVEAPI.liveHasWitness());
+  const dataIn=!!(LIVEAPI.liveDataReady && LIVEAPI.liveDataReady());
+  const running=!!((LIVEAPI.liveStatus && LIVEAPI.liveStatus())||{}).running;
+  let wit='';
+  if (S.mode==='mmd')
+    wit = has ? `<option value="wit">color: witness</option>`
+      : `<option value="wit" disabled>color: witness (${running && !dataIn
+          ? 'after the run' : 'needs an mmdG2Image run'})</option>`;
+  sel.innerHTML=base+wit;
+  /* fall back only once the answer is final: the g2 layout, or loaded data
+     without witness values.  Mid-run there is no data yet and the choice
+     stands, so a rerun keeps the witness fill. */
+  if (S.fillBy==='wit' && (S.mode!=='mmd' || (dataIn && !has))){
+    S.fillBy='dProd';
+    if (LIVEAPI.liveTermOut) LIVEAPI.liveTermOut(S.mode!=='mmd'
+      ? 'witness fill → d_Prod: the g2image layout has no witness'
+      : 'witness fill → d_Prod: this run has no witness values (they come from mmdG2Image runs)');
+  }
   sel.value=S.fillBy;
   syncFillCtls();
 }
@@ -2057,7 +2161,37 @@ if (LIVE) (function(){
     LIVEDATA.karcher=null; LIVEDATA.rmseHist=null; LIVEDATA.sweep={};
     LIVEDATA.decisions={}; LIVEDATA.ssweepData=null; S.dlandScale=null;
     LIVEDATA.recon={}; LIVEDATA.reconPending={};
+    LIVEDATA.witNames=null; LIVEDATA.witCell=null; LIVEDATA.witGrid=null;
+    setFillOptions();   // the witness option follows the data, not only the mode
   }
+  /* point the samples at a witness table (/store/samples or /store/witness):
+     every test column, the column names, and the test cell they came from */
+  function applyWitness(st){
+    LIVEDATA.samples.forEach(o=>{
+      const k=o.gid;
+      o.witCols = st.wit_cols ? st.wit_cols[k]
+                : (st.wit && st.wit[k]!=null ? [st.wit[k]] : null);
+      o.wit = st.wit ? st.wit[k] : null;
+    });
+    LIVEDATA.witNames = st.wit_names || (st.wit ? ['witness'] : null);
+    LIVEDATA.witCell = st.wit_cell || null;   // absent from older recordings
+    applyWitCol();     // point o.wit at the selected column (0=gr,1=spd) + witMax
+  }
+  LIVEAPI.liveHasWitness = ()=> LIVEDATA.ready && LIVEDATA.samples.some(o=>o.wit!=null);
+  LIVEAPI.liveWitCell = ()=> LIVEDATA.witCell || null;
+  LIVEAPI.liveWitGrid = ()=> LIVEDATA.witGrid || null;
+  /* the witness picker: recompute at another tested r of the kept n_re */
+  let witPickSeq=0;
+  LIVEAPI.livePickWitR = async (r)=>{
+    if (!LIVEDATA.ready) return;
+    const seq=++witPickSeq, load=LIVEDATA._loadSeq;
+    try {
+      const w=await apiGet('/store/witness?r='+encodeURIComponent(r));
+      if (seq!==witPickSeq || load!==LIVEDATA._loadSeq) return;   // superseded
+      applyWitness(w);
+    } catch(e){ llog('warn', `witness at r = ${r} unavailable: ${e.message}`); }
+    syncWitCtl(); drawAll();
+  };
   async function loadData(){
     try {
       const st = await apiGet('/store/samples?k=8');
@@ -2081,9 +2215,7 @@ if (LIVE) (function(){
           label: st.label?st.label[k]:'',
           dGr: st.dGr?st.dGr[k]:0, dSPD: st.dSPD?st.dSPD[k]:0,
           dProd: st.dProd?st.dProd[k]:0, t, s, clust:null,
-          witCols: st.wit_cols ? st.wit_cols[k]
-                   : (st.wit && st.wit[k]!=null ? [st.wit[k]] : null),
-          wit: st.wit?st.wit[k]:null});
+          witCols: null, wit: null});
       }
       LIVEDATA.samples=rows; LIVEDATA.byId={}; rows.forEach(r=>LIVEDATA.byId[r.gid]=r);
       LIVEDATA.spectrum=sp?sp.sigma:null;
@@ -2091,13 +2223,13 @@ if (LIVE) (function(){
       LIVEDATA.karcher=kar||null;
       LIVEDATA.rmseHist=null;      // deferred
       LIVEDATA.sweep={};
-      LIVEDATA.witNames = st.wit_names || (st.wit ? ['witness'] : null);
-      applyWitCol();     // point o.wit at the selected column (0=gr,1=spd) + witMax
-      if (LIVEAPI.syncWitCtl) LIVEAPI.syncWitCtl();   // reveal gr/spd toggle now names are known
+      applyWitness(st);
+      LIVEDATA.witGrid = st.wit_grid || null;          // the witness picker's cells
       LIVEDATA.clusters=null; LIVEDATA.clustPending=false;
       LIVEDATA.recon={}; LIVEDATA.reconPending={};
       LIVEDATA.decisions={}; LIVEDATA.ssweepData=null;
       LIVEDATA.ready=true;
+      setFillOptions();  // witness option (and a fallback) now follow this data
       LIVEDATA.nmodes = sp?sp.sigma.length : ((sm&&sm.r)||rows.length||NMODES);
       setR(LIVEDATA.nmodes);             // lock r at the run's computed dimension
       if (hashFlag('lowr'))   // headless smoke: coarse reconstruction
@@ -2149,7 +2281,7 @@ if (LIVE) (function(){
     if (kind==='rmse')  return !!LIVEDATA.rmseHist;
     if (kind==='mean')  return !!LIVEDATA.karcher;   // mean shape (g2 + mmd)
     if (kind==='sweep') return LIVEDATA.ready;        // curves fetched lazily
-    if (kind==='whist') return LIVEDATA.samples.some(o=>o.wit!=null);
+    if (kind==='whist') return LIVEAPI.liveHasWitness();   // same test as the fill
     if (kind==='dland' || kind==='ssweep')            // fetched lazily; the draw
       return S.mode==='mmd' && LIVEDATA.ready;        // paints its own states
     return kind==='sct' || kind==='pga';
@@ -2521,10 +2653,26 @@ if (LIVE) (function(){
     ctx.restore();
     ctx.strokeStyle=css('--border'); ctx.strokeRect(R.rx,R.ry,R.rw,R.rh);
     ctx.font='10px '+css('--font-mono'); ctx.fillStyle=css('--text-sec');
-    const badge = {raw:'raw import', seg:'segmented boundaries',
-      sst:`SST reconstruction r=${rSel} (dashed = original)`,
-      fill:`fill: ${S.fillBy}`}[view];
-    ctx.fillText(badge+(V.z>1?` · zoom ${V.z.toFixed(1)}×`:''), R.rx+8, R.ry+R.rh-8);
+    const zoom = V.z>1 ? ` · zoom ${V.z.toFixed(1)}×` : '';
+    if (view==='fill'){
+      /* the fill's readable name; a witness also names its test cell, on a
+         line of its own when one line would run into the colorbar */
+      const name = S.fillBy==='wit' ? witName()
+        : ({dProd:'d_Prod', dGr:'d_Gr', dSPD:'d_SPD', clust:'cluster'}[S.fillBy]||S.fillBy);
+      const cell = S.fillBy==='wit' ? witCellText() : '';
+      const room = R.rw - 28 - (S.fillBy==='clust' ? 0 : fillColorbarWidth(R));
+      const one = `fill: ${name}${cell?' · '+cell:''}${zoom}`;
+      if (!cell || ctx.measureText(one).width<=room){
+        ctx.fillText(one, R.rx+8, R.ry+R.rh-8);
+      } else {
+        ctx.fillText(`fill: ${name}${zoom}`, R.rx+8, R.ry+R.rh-8);
+        ctx.fillText(`test cell ${cell}`, R.rx+8, R.ry+R.rh-21);
+      }
+    } else {
+      const badge = {raw:'raw import', seg:'segmented boundaries',
+        sst:`SST reconstruction r=${rSel} (dashed = original)`}[view];
+      ctx.fillText(badge+zoom, R.rx+8, R.ry+R.rh-8);
+    }
     fillColorbar(ctx, R);      // colorbar for d_*/witness fills (cluster uses legend)
     return true;
   };
@@ -2569,6 +2717,7 @@ if (LIVE) (function(){
     d.textContent='      '+text; termScroll.appendChild(d);
     termScroll.scrollTop=termScroll.scrollHeight;
   }
+  LIVEAPI.liveTermOut = termOut;   // the shared layer's notes (setFillOptions)
 
   /* -- stage HUD: rebuild the banner runner (#stageRun) per workflow -- */
   const STAGE_LABEL = {
@@ -2737,6 +2886,7 @@ if (LIVE) (function(){
       llog('warn', 'run cancelled'+(hasResults?' — partial results kept':'')); }
     refreshActBtn();
     markFormDirty();     // edits made during the run now surface as "rerun"
+    setFillOptions();    // a run that ended without data: drop "after the run"
   }
 
   /* -- event dispatch -- */
@@ -3704,8 +3854,10 @@ if (LIVE) (function(){
 
   /* -- session drawer: list, load, restore workspace state -- */
   function gatherDashboardState(){
+    const wc=LIVEAPI.liveWitCell && LIVEAPI.liveWitCell();
     return {view:S.view, fillBy:S.fillBy, clustK:S.clustK,
             clustBasis:S.clustBasis, witCol:S.witCol,
+            witR: wc ? wc.r : null,          // the witness picker's test cell
             dlandScale:S.dlandScale,
             cmap:Object.assign({},S.cmap),
             tiles:suppList.slice(), suppFolded:suppFolded,
@@ -3836,8 +3988,11 @@ if (LIVE) (function(){
     document.querySelectorAll('#viewCtl button').forEach(
       x=>x.classList.toggle('on',x.dataset.view===S.view));
     const fb=document.getElementById('fillBy');
-    if (fb){ fb.hidden=S.view!=='fill'; fb.value=S.fillBy; }
-    syncFillCtls(); syncDimSliders();
+    if (fb) fb.hidden=S.view!=='fill';
+    setFillOptions();      // a restored witness fill needs witness values
+    syncDimSliders();
+    const wc=LIVEAPI.liveWitCell && LIVEAPI.liveWitCell();
+    if (db.witR!=null && wc && wc.r!==db.witR) LIVEAPI.livePickWitR(db.witR);
     (db.pins||[]).forEach(p=>{
       if (LIVEAPI.livePinToggle && !(LIVEAPI.liveIsPinned&&LIVEAPI.liveIsPinned(p.key,p.sid)))
         LIVEAPI.livePinToggle(p.key,p.sid);
